@@ -444,3 +444,227 @@ nav a.active { color: var(--text); background: var(--border); }
 .error-msg  { font-size: 14px; color: var(--muted); }
 .error-link { color: var(--accent); text-decoration: none; font-size: 12px; }
 .error-link:hover { text-decoration: underline; }
+
+/* ---------- Nav separator ---------- */
+.nav-sep { color: var(--border); margin: 0 2px; font-size: 12px; }
+
+/* ---------- Convergence tier pills ---------- */
+.tier-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+.tier-1 { background: #1a3a20; color: var(--green); }
+.tier-2 { background: #3a3010; color: var(--amber); }
+.tier-3 { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+
+.tier-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.tier-badge.tier-1 { background: #1a3a20; color: var(--green); }
+.tier-badge.tier-2 { background: #3a3010; color: var(--amber); }
+.tier-badge.tier-3 { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+
+/* ---------- Convergence tier strip ---------- */
+.conv-tier-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--gap);
+}
+.conv-total { color: var(--muted); font-size: 11px; margin-left: 4px; }
+
+/* ---------- Convergence candidate grid ---------- */
+.conv-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: var(--gap);
+}
+@media (max-width: 900px) { .conv-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .conv-grid { grid-template-columns: 1fr; } }
+
+.conv-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+.tier-1-card { border-left: 3px solid var(--green); }
+.tier-2-card { border-left: 3px solid var(--amber); }
+.tier-3-card { border-left: 3px solid var(--border); }
+
+.conv-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.conv-number { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.1; }
+.conv-score  { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+.conv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+.conv-pairs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.chip-signal     { background: #20203a; color: #a0b0f5; }
+.chip-combo-pool { background: #1a2a1a; color: #80c880; }
+.chip-pair-hit   { background: #2a1a2a; color: #c080c0; font-size: 8px; }
+
+.conv-rationale {
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Convergence signal pools ---------- */
+.conv-pools {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: var(--gap);
+}
+.conv-pools-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.pools-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gap);
+  margin-top: 10px;
+}
+@media (max-width: 700px) { .pools-grid { grid-template-columns: repeat(2, 1fr); } }
+.pool-col { display: flex; flex-direction: column; gap: 3px; }
+.pool-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 3px;
+}
+.pool-row  { font-size: 11px; color: var(--text); }
+.pool-rank { color: var(--border); font-size: 9px; min-width: 24px; display: inline-block; }
+.pool-ds   { color: var(--muted); font-size: 9px; }
+
+/* ---------- Convergence export textarea ---------- */
+.conv-export { margin-bottom: var(--gap); }
+.conv-export-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.conv-export-box {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  resize: none;
+}
+
+/* ---------- Convergence overview ---------- */
+.conv-trust-row {
+  display: flex;
+  gap: var(--gap);
+  margin-bottom: var(--gap);
+  flex-wrap: wrap;
+}
+.conv-trust-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 11px;
+  flex: 1;
+  min-width: 200px;
+}
+.trust-session { font-weight: 700; color: var(--text); min-width: 50px; }
+.trust-draw    { font-size: 10px; color: var(--muted); margin-left: auto; }
+
+.conv-session-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gap);
+  margin-bottom: var(--gap);
+}
+@media (max-width: 600px) { .conv-session-strip { grid-template-columns: 1fr; } }
+
+.sess-summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sess-summary-name  { font-size: 13px; font-weight: 700; color: var(--text); }
+.sess-summary-tiers { display: flex; flex-wrap: wrap; gap: 4px; }
+.sess-summary-total { font-size: 10px; color: var(--muted); }
+.sess-summary-link  { font-size: 11px; color: var(--accent); text-decoration: none; }
+.sess-summary-link:hover { text-decoration: underline; }
+
+.conv-bucket-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.conv-bucket-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.conv-bucket-count {
+  font-size: 10px;
+  background: var(--border);
+  color: var(--muted);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.conv-empty {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 10px 0;
+  margin-bottom: var(--gap);
+}

@@ -19,6 +19,7 @@ from starlette.responses import Response
 from bluegrass.app.audit import build_audit_overview, build_session_audit
 from bluegrass.app.board import build_session_board
 from bluegrass.app.classify import classify_digit_pattern, classify_pair, classify_play_type
+from bluegrass.app.convergence import build_convergence_overview, build_session_convergence
 from bluegrass.app.overview import build_all_draws_overview
 from bluegrass.app.playlist import _VALID_SESSIONS
 from bluegrass.engine.client import EngineClientError, fetch_latest_results
@@ -162,6 +163,36 @@ def ui_session(
         "sync_result": sync_result,
         "session": session,
         "active": session,
+    })
+
+
+@router.get("/convergence/overview", response_class=HTMLResponse, include_in_schema=False)
+def ui_convergence_overview(request: Request) -> Response:
+    conv  = build_convergence_overview()
+    audit = build_audit_overview()
+    return templates.TemplateResponse(request, "convergence_overview.html", {
+        "conv":   conv,
+        "audit":  audit,
+        "active": "convergence_overview",
+    })
+
+
+@router.get("/convergence/session/{session}", response_class=HTMLResponse, include_in_schema=False)
+def ui_convergence_session(session: str, request: Request) -> Response:
+    if session not in _VALID_SESSIONS:
+        return templates.TemplateResponse(
+            request, "404.html",
+            {"active": None,
+             "detail": f"Session {session!r} not found. Valid: Midday, Evening, Night."},
+            status_code=404,
+        )
+    conv  = build_session_convergence(session)
+    audit = build_session_audit(session)
+    return templates.TemplateResponse(request, "convergence_session.html", {
+        "conv":    conv,
+        "audit":   audit,
+        "session": session,
+        "active":  f"conv_{session}",
     })
 
 
