@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 
+from bluegrass.app.board import build_session_board
 from bluegrass.app.dashboard import get_dashboard_payload
 from bluegrass.app.homepage import build_homepage_view, build_session_homepage_view
 from bluegrass.app.playlist import build_session_playlist, build_session_stats
@@ -48,6 +49,19 @@ def dashboard_session(session: str) -> dict[str, object]:
 def dashboard_session_cards(session: str) -> dict[str, object]:
     try:
         return build_session_cards(session)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
+# Daily board
+# ---------------------------------------------------------------------------
+
+@app.get("/board/session/{session}")
+def board_session(session: str) -> dict[str, object]:
+    """Compact daily narrowing board for a session: top overdue families + shortlist + rationale."""
+    try:
+        return build_session_board(session)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
