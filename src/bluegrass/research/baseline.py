@@ -90,3 +90,26 @@ def filter_priority_shortlist(
     if limit is not None:
         return filtered[:limit]
     return filtered
+
+
+# SESSION_NORMALIZATION_WRAPPER
+_original_baseline_packet_summary = baseline_packet_summary
+
+
+def _normalize_session_values(values: list[object]) -> list[str]:
+    discovered: set[str] = set()
+    allowed_order = ["Midday", "Evening", "Night"]
+
+    for value in values:
+        for part in str(value).split("|"):
+            part = part.strip()
+            if part in allowed_order:
+                discovered.add(part)
+
+    return [session for session in allowed_order if session in discovered]
+
+
+def baseline_packet_summary() -> dict[str, object]:
+    summary = _original_baseline_packet_summary()
+    summary["sessions"] = _normalize_session_values(list(summary.get("sessions", [])))
+    return summary

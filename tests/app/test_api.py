@@ -40,3 +40,19 @@ def test_dashboard_homepage_view_endpoint() -> None:
     assert "session_spotlights" in payload
     assert "priority_combos" in payload
     assert "metadata" in payload
+
+
+def test_dashboard_session_endpoint() -> None:
+    response = client.get("/dashboard/session/Night")
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["session"] == "Night"
+    assert "pair_spotlight" in payload
+    assert "combo_spotlight" in payload
+    assert payload["metadata"]["selected_session"] == "Night"
+
+
+def test_dashboard_session_endpoint_rejects_invalid_session() -> None:
+    response = client.get("/dashboard/session/Weekend")
+    assert response.status_code == 404
