@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}404 — Bluegrass{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-code">404</div>
+  <div class="error-msg">{{ detail }}</div>
+  <a class="error-link" href="/">← Back to Overview</a>
+</div>
+{% endblock %}

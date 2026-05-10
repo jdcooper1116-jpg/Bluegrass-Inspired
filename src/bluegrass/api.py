@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 
 from bluegrass.app.board import build_session_board
 from bluegrass.app.overview import build_all_draws_overview
@@ -10,10 +13,15 @@ from bluegrass.app.playlist import build_session_playlist, build_session_stats
 from bluegrass.app.session_cards import build_session_cards
 from bluegrass.engine.client import EngineClientError, fetch_latest_results
 from bluegrass.engine.intake import normalize_result
+from bluegrass.frontend import router as frontend_router
 from bluegrass.research.baseline import baseline_packet_summary
 from bluegrass.research.refresh import refresh_from_result
 
 app = FastAPI(title="Bluegrass Baseline API", version="0.2.0")
+
+_STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+app.include_router(frontend_router)
 
 
 @app.get("/health")
