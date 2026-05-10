@@ -29,3 +29,14 @@ def test_dashboard_homepage_endpoint() -> None:
     assert "baseline_summary" in payload
     assert "spotlight" in payload
     assert "watchlist" in payload
+
+
+def test_dashboard_homepage_view_endpoint() -> None:
+    response = client.get("/dashboard/homepage-view")
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert "hero_cards" in payload
+    assert "session_spotlights" in payload
+    assert "priority_combos" in payload
+    assert "metadata" in payload
