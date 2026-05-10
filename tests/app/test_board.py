@@ -124,7 +124,37 @@ def test_shortlist_no_internal_score_field() -> None:
 def test_shortlist_has_family_diversity() -> None:
     board = build_session_board("Midday")
     families = {e["family"] for e in board["shortlist"]}
-    assert len(families) >= 2
+    assert len(families) >= 4, f"all four families must appear, got: {families}"
+
+
+def test_shortlist_all_four_families_present() -> None:
+    for session in ["Midday", "Evening", "Night"]:
+        board = build_session_board(session)
+        families = {e["family"] for e in board["shortlist"]}
+        assert "sum" in families, f"{session}: sum missing"
+        assert "root_sum" in families, f"{session}: root_sum missing"
+        assert "pair" in families, f"{session}: pair missing"
+        assert "combination" in families, f"{session}: combination missing"
+
+
+def test_shortlist_no_family_exceeds_quota() -> None:
+    from collections import Counter
+    for session in ["Midday", "Evening", "Night"]:
+        board = build_session_board(session)
+        counts = Counter(e["family"] for e in board["shortlist"])
+        for fam, count in counts.items():
+            assert count <= 3, f"{session}: family {fam!r} has {count} entries, quota is 3"
+
+
+def test_combinations_do_not_open_shortlist() -> None:
+    """Shortlist must not start with 5 ancient combinations."""
+    for session in ["Midday", "Evening", "Night"]:
+        board = build_session_board(session)
+        first_five = board["shortlist"][:5]
+        combo_count = sum(1 for e in first_five if e["family"] == "combination")
+        assert combo_count <= 2, (
+            f"{session}: {combo_count} combinations in top 5 (max 2 allowed)"
+        )
 
 
 # ---------------------------------------------------------------------------
