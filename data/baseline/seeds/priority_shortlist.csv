@@ -1,0 +1,301 @@
+item_type,run_id,session,subtype,value,times_drawn,expected_times,draws_since,last_seen,baseline_priority_score,why_flagged,source_url
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,33,15,,4454,2022-04-16,23.02,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,22,15,,3320,2023-04-29,17.35,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN005,Midday|Evening|Night,Front Pair from Box Combination,59,82,,1056,2025-05-22,11.31,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN042,Midday,All straight combinations,093,1,9.76,9403,1999-03-01,10.302468,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN005,Midday|Evening|Night,Front Pair from Box Combination,69,67,,718,2025-09-12,7.93,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,55,23,,1378,2025-02-04,7.64,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN042,Midday,All straight combinations,650,4,9.76,7003,2006-10-30,7.594599,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,752,3,9.76,6665,2007-11-28,7.358989,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,804,9,11.97,7018,2007-02-23,7.268466,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,353,21,25.1,6959,2020-01-02,7.122901,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,270,3,11.97,6333,2009-01-05,7.08449,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,536,5,11.97,6136,2009-07-21,6.72034,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,081,5,9.76,6037,2009-10-28,6.525942,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,078,20,25.1,6110,2020-10-11,6.313674,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN043,Midday,All box combinations,234,65,58.54,1036,2023-07-08,6.215151,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,651,20,25.1,5936,2020-12-08,6.13966,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,273,4,11.97,5370,2011-08-26,6.037626,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,815,4,9.76,5407,2011-07-20,5.998272,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,134,5,9.76,5421,2011-07-06,5.909816,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,002,7,9.76,5520,2011-03-29,5.803918,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,13,222,,504,2025-11-22,5.79,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN002,Midday|Evening|Night,All box combinations,467,139,150.56,942,2025-06-29,5.727729,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,591,19,25.1,5453,2021-05-18,5.696462,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,953,20,25.1,5483,2021-05-08,5.686624,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,388,7,9.76,5338,2011-09-27,5.621881,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,222,7,11.97,5170,2012-03-13,5.586933,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN045,Evening,All box combinations,222,7,11.97,5170,2012-03-13,5.586933,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,078,11,11.97,5457,2011-05-31,5.53986,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,391,10,11.97,5303,2011-11-01,5.469351,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN045,Evening,All box combinations,569,65,71.78,890,2023-12-01,5.433265,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,600,3,9.76,4737,2013-05-20,5.430594,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,109,24,25.1,5355,2021-06-19,5.399251,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,087,20,25.1,4958,2021-10-30,5.161582,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,970,6,11.97,4570,2013-11-03,5.070275,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,027,6,9.76,4648,2013-08-17,5.034199,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN047,Night,All box combinations,169,10,20.24,750,2024-04-19,5.00504,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,453,6,9.76,4594,2013-10-10,4.980187,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,544,7,11.97,4558,2013-11-15,4.974728,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN006,Midday|Evening|Night,Back Pair Straight,42,233,251,830,2025-08-06,4.971713,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN042,Midday,All straight combinations,105,3,9.76,4268,2014-09-01,4.961498,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,759,5,9.76,4461,2014-02-20,4.949619,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,142,5,9.76,4432,2014-03-21,4.920613,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,333,15,25.1,4454,2022-04-16,4.856745,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN002,Midday|Evening|Night,All box combinations,333,15,25.1,4454,2022-04-16,4.856745,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,181,6,11.97,4351,2014-06-10,4.851201,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,11,20,,817,2025-08-10,4.835,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN034,Night,Front Pair Box,57,60,67.5,396,2025-04-08,4.821111,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN042,Midday,All straight combinations,859,4,9.76,4225,2014-10-14,4.81603,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,011,6,11.97,4275,2014-08-25,4.775176,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,552,6,9.76,4389,2014-05-03,4.775145,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,490,10,11.97,4600,2013-10-04,4.766116,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN043,Midday,All box combinations,289,50,58.54,768,2024-04-01,4.753254,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,233,4,9.76,4134,2015-01-13,4.725011,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,405,7,11.97,4212,2014-10-27,4.628613,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,722,5,9.76,4107,2015-02-09,4.595547,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,342,22,25.1,4470,2022-04-10,4.593862,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN045,Evening,All box combinations,257,73,71.78,764,2024-04-05,4.582978,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,995,8,9.76,4400,2014-04-22,4.58123,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,340,5,11.97,3982,2015-06-14,4.56562,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN002,Midday|Evening|Night,All box combinations,117,68,75.3,1489,2024-12-29,4.564302,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,754,22,25.1,4430,2022-04-24,4.553859,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,627,3,9.76,3856,2015-10-18,4.549413,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,680,5,9.76,4027,2015-04-30,4.51553,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN006,Midday|Evening|Night,Back Pair Straight,45,264,251,748,2025-09-02,4.49,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN023,Evening,Front Pair Straight,41,110,119.7,731,2024-05-08,4.486036,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN047,Night,All box combinations,004,2,10.12,1218,2023-01-07,4.45565,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,676,16,11.97,4419,2014-04-03,4.420477,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,230,8,11.97,4086,2015-03-02,4.419028,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,563,5,9.76,3889,2015-09-15,4.377502,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,084,8,9.76,4191,2014-11-17,4.372187,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,006,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,078,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,088,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,096,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,101,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,105,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,113,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,134,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,146,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,157,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,169,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,210,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,213,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,236,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,239,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,315,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,353,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,400,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,460,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,491,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,512,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,661,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,674,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,750,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,789,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,842,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,872,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,882,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,909,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,935,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,945,0,3.37,3374,,4.37,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,109,7,9.76,4081,2015-03-07,4.364623,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,052,14,25.1,3916,2022-10-12,4.358543,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,07,71,,357,2026-01-10,4.32,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN044,Evening,All straight combinations,298,13,11.97,4316,2014-07-15,4.317443,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN005,Midday|Evening|Night,Front Pair from Box Combination,49,67,,356,2026-01-11,4.31,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN044,Evening,All straight combinations,976,15,11.97,4307,2014-07-24,4.30844,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,532,7,11.97,3865,2015-10-09,4.281497,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,570,9,9.76,4186,2014-11-22,4.264727,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN022,Evening,Any Position Box,44,347,335,249,2025-09-02,4.257042,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN042,Midday,All straight combinations,595,7,9.76,3969,2015-06-27,4.2526,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,060,8,9.76,4062,2015-03-26,4.24316,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,927,18,25.1,3954,2022-09-29,4.237184,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN026,Evening,Back Pair Straight,44,115,119.7,687,2024-06-21,4.224265,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN027,Evening,Back Pair Box,44,115,119.7,687,2024-06-21,4.224265,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN001,Midday|Evening|Night,All straight combinations,147,20,25.1,4013,2022-09-10,4.216507,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,192,9,11.97,3948,2015-07-18,4.19744,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,566,8,11.97,3862,2015-10-12,4.194953,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN045,Evening,All box combinations,011,31,35.9,1345,2022-09-02,4.171715,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN002,Midday|Evening|Night,All box combinations,134,161,150.56,690,2025-09-21,4.13923,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,394,14,25.1,3693,2022-12-25,4.135525,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,152,7,11.97,3712,2016-03-10,4.128446,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,474,10,11.97,3924,2015-08-11,4.08989,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,982,25,25.1,4064,2022-08-24,4.068308,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,525,1,3.37,3348,2017-03-09,4.047295,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN045,Evening,All box combinations,045,56,71.78,638,2024-08-09,4.046985,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,324,27,25.1,4038,2022-09-01,4.038322,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN043,Midday,All box combinations,036,51,58.54,651,2024-07-27,4.034267,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,267,10,9.76,4032,2015-04-25,4.032826,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN002,Midday|Evening|Night,All box combinations,146,161,150.56,672,2025-09-27,4.03125,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,961,15,25.1,3616,2023-01-20,4.018679,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,919,27,25.1,4016,2022-09-09,4.01632,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,089,5,9.76,3509,2016-09-29,3.997424,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,070,5,9.76,3500,2016-10-08,3.988422,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,523,9,11.97,3732,2016-02-19,3.981368,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,340,1,3.37,3276,2017-05-20,3.97538,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,166,8,11.97,3641,2016-05-20,3.97388,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,100,7,9.76,3678,2016-04-13,3.961541,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,187,8,11.97,3623,2016-06-07,3.955874,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN043,Midday,All box combinations,288,29,29.28,1312,2022-10-05,3.94637,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,882,25,25.1,3938,2022-10-05,3.942298,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,814,12,11.97,3930,2015-08-05,3.931314,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,553,9,9.76,3846,2015-10-28,3.924657,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,924,1,3.37,3216,2017-07-19,3.915451,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN043,Midday,All box combinations,588,21,29.28,1209,2023-01-16,3.91053,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN042,Midday,All straight combinations,829,5,9.76,3407,2017-01-09,3.895403,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,624,11,11.97,3809,2015-12-04,3.891309,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,466,1,3.37,3179,2017-08-25,3.878495,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,298,27,25.1,3876,2022-10-25,3.876309,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN043,Midday,All box combinations,117,23,29.28,1218,2023-01-07,3.86923,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,969,18,25.1,3567,2023-02-05,3.850153,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN033,Night,Front Pair Straight,47,31,33.7,603,2024-09-13,3.845119,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+combination,RUN044,Evening,All straight combinations,519,12,11.97,3843,2015-10-31,3.844285,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,060,17,25.1,3514,2023-02-23,3.836989,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,303,1,3.37,3127,2017-10-16,3.826557,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,333,1,3.37,3117,2017-10-26,3.816569,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN047,Night,All box combinations,333,1,3.37,3117,2017-10-26,3.816569,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN047,Night,All box combinations,035,20,20.24,634,2024-08-13,3.815106,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,941,17,25.1,3490,2023-03-03,3.812987,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,530,1,3.37,3111,2017-11-01,3.810576,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,574,1,3.37,3108,2017-11-04,3.807579,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,119,24,25.1,3760,2022-12-03,3.804124,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,710,23,25.1,3719,2022-12-17,3.802962,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN046,Night,All straight combinations,248,1,3.37,3088,2017-11-24,3.787603,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN043,Midday,All box combinations,356,50,58.54,607,2024-09-09,3.787386,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN001,Midday|Evening|Night,All straight combinations,312,28,25.1,3782,2022-11-26,3.782301,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+combination,RUN044,Evening,All straight combinations,110,12,11.97,3768,2016-01-14,3.76926,high recency_pressure and/or below expected frequency,https://www.lotterypost.com/systems/combinations
+pair,RUN033,Night,Front Pair Straight,57,34,33.7,585,2024-10-01,3.675,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,02,76,,291,2026-02-01,3.66,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,02,288,,291,2026-02-01,3.66,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN010,Midday|Evening|Night,Split Pair Box,46,463,502,283,2026-02-04,3.657689,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN027,Evening,Back Pair Box,35,250,239.3,287,2025-07-26,3.62,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,88,31,,570,2025-10-31,3.6,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN005,Midday|Evening|Night,Front Pair from Box Combination,46,495,,283,2026-02-04,3.58,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,94,33,33.7,546,2024-11-09,3.500772,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,00,26,,547,2025-11-08,3.485,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,00,26,,547,2025-11-08,3.485,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN013,Midday,Front Pair Straight,45,91,97.6,533,2024-11-22,3.482623,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,44,27,,546,2025-11-08,3.48,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN033,Night,Front Pair Straight,80,35,33.7,529,2024-11-26,3.395,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,23,144,,254,2026-02-14,3.29,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN009,Midday|Evening|Night,Split Pair Straight,67,259,251,507,2025-11-21,3.285,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN024,Evening,Front Pair Box,89,246,239.3,252,2025-08-30,3.27,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN033,Night,Front Pair Straight,69,28,33.7,467,2025-01-27,3.254139,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN013,Midday,Front Pair Straight,82,92,97.6,484,2025-01-10,3.227377,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN003,Midday|Evening|Night,Front Pair Straight,34,246,251,486,2025-11-28,3.19992,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN009,Midday|Evening|Night,Split Pair Straight,64,238,251,476,2025-12-02,3.181793,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,61,27,33.7,445,2025-02-18,3.173813,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN007,Midday|Evening|Night,Back Pair Box,17,514,502,242,2026-02-18,3.17,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,37,484,,242,2026-02-18,3.17,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN029,Evening,Split Pair Straight,95,107,119.7,439,2025-02-24,3.051099,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN012,Midday,Any Position Box,34,533,526.9,85,2026-02-13,3.047297,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN029,Evening,Split Pair Straight,49,122,119.7,446,2025-02-17,2.98,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN005,Midday|Evening|Night,Front Pair from Box Combination,79,96,,223,2026-02-24,2.98,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN033,Night,Front Pair Straight,75,26,33.7,396,2025-04-08,2.958487,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN009,Midday|Evening|Night,Split Pair Straight,75,266,251,438,2025-12-14,2.94,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN029,Evening,Split Pair Straight,64,110,119.7,420,2025-03-15,2.931036,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,74,113,119.7,420,2025-03-15,2.905973,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,29,25,33.7,377,2025-04-27,2.89316,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,55,106,119.7,394,2025-04-10,2.834453,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN027,Evening,Back Pair Box,55,106,119.7,394,2025-04-10,2.834453,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN009,Midday|Evening|Night,Split Pair Straight,08,252,251,415,2025-12-22,2.825,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,55,28,33.7,371,2025-05-03,2.774139,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN040,Night,Split Pair Box,55,28,33.7,371,2025-05-03,2.774139,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN014,Midday,Front Pair Box,23,187,195.2,198,2025-10-23,2.772008,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,18,240,,201,2026-03-03,2.76,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,64,28,33.7,366,2025-05-08,2.749139,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN034,Night,Front Pair Box,12,67,67.5,197,2025-10-24,2.727407,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN019,Midday,Split Pair Straight,66,85,97.6,365,2025-05-09,2.704098,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN020,Midday,Split Pair Box,66,85,97.6,365,2025-05-09,2.704098,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN012,Midday,Any Position Box,46,538,526.9,72,2026-02-26,2.695946,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN022,Evening,Any Position Box,25,612,646.2,70,2026-02-28,2.694817,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN023,Evening,Front Pair Straight,27,100,119.7,356,2025-05-18,2.694578,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN007,Midday|Evening|Night,Back Pair Box,35,504,502,192,2026-03-06,2.67,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN010,Midday|Evening|Night,Split Pair Box,49,502,502,191,2026-03-07,2.66,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,56,146,,189,2026-03-07,2.64,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN033,Night,Front Pair Straight,04,35,33.7,372,2025-05-02,2.61,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,19,248,,186,2026-03-08,2.61,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN030,Evening,Split Pair Box,03,236,239.3,184,2025-11-06,2.60379,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN024,Evening,Front Pair Box,15,248,239.3,185,2025-11-05,2.6,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN007,Midday|Evening|Night,Back Pair Box,03,486,502,181,2026-03-10,2.591873,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN013,Midday,Front Pair Straight,13,86,97.6,343,2025-05-31,2.583852,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,35,119,119.7,365,2025-05-09,2.580848,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN020,Midday,Split Pair Box,56,214,195.2,182,2025-11-08,2.57,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN024,Evening,Front Pair Box,69,228,239.3,177,2025-11-13,2.567221,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,42,119,119.7,362,2025-05-12,2.565848,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN012,Midday,Any Position Box,45,535,526.9,67,2026-03-03,2.560811,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN037,Night,Back Pair Box,49,61,67.5,171,2025-11-19,2.556296,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,34,534,,178,2026-03-11,2.53,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,24,324,,178,2026-03-11,2.53,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN009,Midday|Evening|Night,Split Pair Straight,28,257,251,355,2026-01-11,2.525,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN036,Night,Back Pair Straight,33,30,33.7,332,2025-06-11,2.519792,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN037,Night,Back Pair Box,33,30,33.7,332,2025-06-11,2.519792,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN006,Midday|Evening|Night,Back Pair Straight,52,203,251,315,2026-01-24,2.516235,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,77,28,,353,2026-01-12,2.515,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN007,Midday|Evening|Night,Back Pair Box,19,516,502,176,2026-03-12,2.51,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN033,Night,Front Pair Straight,84,31,33.7,333,2025-06-10,2.495119,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN009,Midday|Evening|Night,Split Pair Straight,59,260,251,347,2026-01-14,2.485,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN040,Night,Split Pair Box,49,66,67.5,171,2025-11-19,2.482222,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN013,Midday,Front Pair Straight,95,91,97.6,330,2025-06-13,2.467623,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN010,Midday|Evening|Night,Split Pair Box,58,494,502,170,2026-03-14,2.465936,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,67,159,,169,2026-03-14,2.44,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,04,118,119.7,335,2025-06-08,2.439202,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN005,Midday|Evening|Night,Front Pair from Box Combination,19,77,,167,2026-03-15,2.42,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN013,Midday,Front Pair Straight,11,95,97.6,327,2025-06-16,2.411639,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN014,Midday,Front Pair Box,11,95,97.6,327,2025-06-16,2.411639,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN003,Midday|Evening|Night,Front Pair Straight,22,252,251,329,2026-01-20,2.395,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN004,Midday|Evening|Night,Front Pair Box,22,252,251,329,2026-01-20,2.395,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,42,32,33.7,318,2025-06-25,2.390445,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN029,Evening,Split Pair Straight,44,133,119.7,328,2025-06-15,2.39,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN027,Evening,Back Pair Box,47,223,239.3,157,2025-12-03,2.388115,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN033,Night,Front Pair Straight,94,30,33.7,305,2025-07-08,2.384792,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN036,Night,Back Pair Straight,42,31,33.7,309,2025-07-04,2.375119,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN012,Midday,Any Position Box,59,536,526.9,60,2026-03-10,2.371622,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN011,Midday|Evening|Night,Split Pair from Box Combination,68,285,,161,2026-03-17,2.36,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN023,Evening,Front Pair Straight,71,133,119.7,319,2025-06-24,2.345,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN023,Evening,Front Pair Straight,40,116,119.7,310,2025-07-03,2.330911,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN012,Midday,Any Position Box,22,261,273.2,109,2026-01-20,2.329867,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN037,Night,Back Pair Box,59,69,67.5,157,2025-12-03,2.32,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN036,Night,Back Pair Straight,45,35,33.7,313,2025-06-30,2.315,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN029,Evening,Split Pair Straight,82,121,119.7,311,2025-07-02,2.305,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,73,42,33.7,310,2025-07-03,2.3,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN019,Midday,Split Pair Straight,41,98,97.6,304,2025-07-09,2.27,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN023,Evening,Front Pair Straight,89,121,119.7,300,2025-07-13,2.25,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN036,Night,Back Pair Straight,13,21,33.7,261,2025-08-21,2.031855,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN006,Midday|Evening|Night,Back Pair Straight,96,208,251,283,2026-02-04,1.936315,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,33,26,33.7,271,2025-08-11,1.933487,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN040,Night,Split Pair Box,33,26,33.7,271,2025-08-11,1.933487,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN033,Night,Front Pair Straight,02,27,33.7,274,2025-08-08,1.918813,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,68,25,33.7,258,2025-08-24,1.89816,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN023,Evening,Front Pair Straight,65,107,119.7,287,2025-07-26,1.891099,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN036,Night,Back Pair Straight,96,19,33.7,220,2025-10-01,1.886202,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,11,99,119.7,272,2025-08-10,1.882932,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN027,Evening,Back Pair Box,11,99,119.7,272,2025-08-10,1.882932,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN009,Midday|Evening|Night,Split Pair Straight,46,225,251,283,2026-02-04,1.868586,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,23,119,119.7,298,2025-07-15,1.845848,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN019,Midday,Split Pair Straight,10,80,97.6,263,2025-08-19,1.845328,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN005,Midday|Evening|Night,Front Pair from Box Combination,37,426,,149,2026-03-21,1.84,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN010,Midday|Evening|Night,Split Pair Box,37,535,502,149,2026-03-21,1.84,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN039,Night,Split Pair Straight,91,30,33.7,275,2025-08-07,1.834792,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,60,120,119.7,293,2025-07-20,1.815,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN034,Night,Front Pair Box,35,64,67.5,141,2025-12-19,1.811852,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN023,Evening,Front Pair Straight,91,115,119.7,284,2025-07-29,1.809265,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN010,Midday|Evening|Night,Split Pair Box,03,491,502,143,2026-03-23,1.801912,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN023,Evening,Front Pair Straight,08,122,119.7,288,2025-07-25,1.79,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN029,Evening,Split Pair Straight,04,133,119.7,288,2025-07-25,1.79,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN040,Night,Split Pair Box,69,63,67.5,137,2025-12-23,1.786667,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN009,Midday|Evening|Night,Split Pair Straight,83,259,251,287,2026-02-03,1.785,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,53,131,119.7,287,2025-07-26,1.785,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,03,73,,143,2026-03-23,1.78,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN013,Midday,Front Pair Straight,94,101,97.6,285,2025-07-28,1.775,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN029,Evening,Split Pair Straight,75,132,119.7,285,2025-07-28,1.775,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN003,Midday|Evening|Night,Front Pair Straight,73,245,251,280,2026-02-05,1.773904,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,05,78,,142,2026-03-23,1.77,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN033,Night,Front Pair Straight,23,36,33.7,283,2025-07-30,1.765,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN013,Midday,Front Pair Straight,76,104,97.6,281,2025-08-01,1.755,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN026,Evening,Back Pair Straight,48,124,119.7,281,2025-08-01,1.755,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN036,Night,Back Pair Straight,36,31,33.7,264,2025-08-18,1.750119,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN005,Midday|Evening|Night,Front Pair from Box Combination,25,658,,140,2026-03-24,1.75,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs
+pair,RUN008,Midday|Evening|Night,Back Pair from Box Combination,25,338,,140,2026-03-24,1.75,high lateness_ratio and/or below expected frequency,https://www.lotterypost.com/systems/pairs

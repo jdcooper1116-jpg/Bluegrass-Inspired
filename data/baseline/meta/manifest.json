@@ -1,0 +1,56 @@
+{
+  "source_workbook": "Bluegrass_Baseline_Packet_Template_UPDATED_v47.xlsx",
+  "generated_at_utc": "2026-05-10T15:40:33.256772Z",
+  "summary": {
+    "total_runs": 47,
+    "pair_rows": 2630,
+    "combination_rows": 4880,
+    "sessions": [
+      "Evening",
+      "Midday",
+      "Midday|Evening|Night",
+      "Night"
+    ],
+    "jurisdictions": [
+      "GA"
+    ],
+    "game_family": [
+      "Pick 3"
+    ],
+    "run_game_labels": [
+      "Georgia Cash 3",
+      "Georgia Cash 3 Evening",
+      "Georgia Cash 3 Midday",
+      "Georgia Cash 3 Night"
+    ]
+  },
+  "coverage_by_session": {
+    "Midday|Evening|Night": {
+      "pairs_runs": 9,
+      "combination_runs": 2
+    },
+    "Midday": {
+      "pairs_runs": 6,
+      "combination_runs": 2
+    },
+    "Evening": {
+      "pairs_runs": 10,
+      "combination_runs": 2
+    },
+    "Night": {
+      "pairs_runs": 10,
+      "combination_runs": 2
+    }
+  },
+  "files": {
+    "runs_csv": "bluegrass_app_seed_runs.csv",
+    "pairs_csv": "bluegrass_app_seed_pairs.csv",
+    "combinations_csv": "bluegrass_app_seed_combinations.csv",
+    "priority_shortlist_csv": "bluegrass_app_priority_shortlist.csv"
+  },
+  "notes": [
+    "combo_value and pair_value are exported as text to preserve leading zeroes.",
+    "baseline_priority_score is a transparent screening heuristic, not a final prediction model.",
+    "Use the Runs table as the source of truth for metadata and packet provenance."
+  ]
+}
