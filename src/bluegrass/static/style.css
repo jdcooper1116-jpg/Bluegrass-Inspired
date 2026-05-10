@@ -296,6 +296,139 @@ nav a.active { color: var(--text); background: var(--border); }
 .overlap-chip .chip-value { font-weight: 700; color: var(--text); }
 .overlap-chip .chip-count { color: var(--green); font-size: 10px; }
 
+/* ---------- Classification chips ---------- */
+.chip {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 3px;
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+.chip-single   { background: #1a3050; color: #7ab4f8; }
+.chip-double   { background: #30183a; color: #c4a0f5; }
+.chip-triple   { background: #3a1818; color: #f5a0a0; }
+.chip-straight { background: #183018; color: #7af5a0; }
+.chip-box      { background: #302818; color: #f5c47a; }
+.chip-front    { background: #182030; color: #7ab4f8; }
+.chip-back     { background: #281830; color: #c4a0f5; }
+.chip-split    { background: #183028; color: #7af5c4; }
+.chip-unknown  { background: var(--border); color: var(--muted); }
+
+/* ---------- Freshness badges ---------- */
+.freshness-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.freshness-fresh          { background: #183a28; color: var(--green); }
+.freshness-stale          { background: #3a2a10; color: var(--amber); }
+.freshness-baseline-only  { background: var(--border); color: var(--muted); }
+.freshness-engine-unknown { background: var(--border); color: var(--muted); }
+.freshness-inconclusive   { background: var(--border); color: var(--muted); }
+
+/* ---------- Audit strip ---------- */
+.audit-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  margin-bottom: var(--gap);
+  font-size: 11px;
+}
+
+.audit-field { color: var(--muted); }
+.audit-field code { color: var(--text); font-size: 11px; }
+.audit-warn  { color: var(--amber); font-weight: 600; }
+.audit-draws-behind { color: var(--amber); }
+
+/* ---------- Freshness table (overview) ---------- */
+.freshness-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--gap);
+  font-size: 11px;
+}
+
+.freshness-table th {
+  text-align: left;
+  padding: 4px 10px;
+  color: var(--muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.freshness-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.freshness-table tr:last-child td { border-bottom: none; }
+.freshness-table code { font-size: 10px; color: var(--muted); }
+
+/* ---------- Sync result banner ---------- */
+.sync-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #183028;
+  border: 1px solid #2a5040;
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  margin-bottom: var(--gap);
+  font-size: 12px;
+  color: var(--green);
+}
+
+.sync-banner .sync-label { font-weight: 700; }
+.sync-banner .sync-detail { color: var(--muted); font-size: 11px; }
+
+/* ---------- Refresh button ---------- */
+.btn-refresh {
+  display: inline-block;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  margin-left: auto;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- Pair position groups ---------- */
+.pair-group { margin-bottom: 12px; }
+
+.pair-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
 /* ---------- 404 page ---------- */
 .error-page {
   display: flex;

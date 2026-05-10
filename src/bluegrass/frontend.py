@@ -6,17 +6,24 @@ Routes are mounted into the main FastAPI app in api.py.
 
 from __future__ import annotations
 
+from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
-from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Query
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
 from starlette.responses import Response
 
+from bluegrass.app.audit import build_audit_overview, build_session_audit
 from bluegrass.app.board import build_session_board
+from bluegrass.app.classify import classify_digit_pattern, classify_pair, classify_play_type
 from bluegrass.app.overview import build_all_draws_overview
 from bluegrass.app.playlist import _VALID_SESSIONS
+from bluegrass.engine.client import EngineClientError, fetch_latest_results
+from bluegrass.engine.intake import normalize_result
+from bluegrass.research.refresh import refresh_from_result
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
@@ -24,27 +31,149 @@ templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 router = APIRouter()
 
 
+# ---------------------------------------------------------------------------
+# Card enrichment helpers
+# ---------------------------------------------------------------------------
+
+def _enrich_pair_card(card: dict[str, Any]) -> dict[str, Any]:
+    """Add pair_position and play_type_label chips. No digit_pattern for 2-digit values."""
+    c = dict(card)
+    pair_cls = classify_pair(card.get("subtype"))
+    c["pair_position"] = pair_cls["position"]
+    c["play_type_label"] = pair_cls["play_type"]
+    return c
+
+
+def _enrich_combo_card(card: dict[str, Any]) -> dict[str, Any]:
+    """Add digit_pattern (single/double/triple) and play_type_label chips."""
+    c = dict(card)
+    c["digit_pattern"] = classify_digit_pattern(str(card.get("value", "")))
+    c["play_type_label"] = classify_play_type(card.get("subtype"))
+    return c
+
+
+def _enrich_shortlist_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    """Enrich by family: combos get digit_pattern; pairs get position chips."""
+    c = dict(entry)
+    family = entry.get("family", "")
+    if family == "combination":
+        c["digit_pattern"] = classify_digit_pattern(str(entry.get("value", "")))
+        c["play_type_label"] = classify_play_type(entry.get("subtype"))
+    elif family == "pair":
+        pair_cls = classify_pair(entry.get("subtype"))
+        c["pair_position"] = pair_cls["position"]
+        c["play_type_label"] = pair_cls["play_type"]
+    return c
+
+
+def _group_pairs_by_position(
+    pairs: list[dict[str, Any]],
+) -> list[tuple[str, list[dict[str, Any]]]]:
+    """Group enriched pair cards by position, returning ordered (label, cards) pairs."""
+    groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for card in pairs:
+        groups[card.get("pair_position", "unknown")].append(card)
+    order = ["front", "back", "split", "unknown"]
+    return [(pos, groups[pos]) for pos in order if pos in groups]
+
+
+# ---------------------------------------------------------------------------
+# Sync helper (shared by POST /refresh)
+# ---------------------------------------------------------------------------
+
+def _run_sync() -> dict[str, int]:
+    """Run sync-latest and return {processed, skipped, errors} counts."""
+    processed = skipped = errors = 0
+    try:
+        raw_rows = fetch_latest_results()
+    except EngineClientError:
+        return {"processed": 0, "skipped": 0, "errors": 1}
+    for raw in raw_rows:
+        try:
+            result = normalize_result(raw)
+        except ValueError:
+            errors += 1
+            continue
+        summary = refresh_from_result(result)
+        if summary.get("skipped"):
+            skipped += 1
+        else:
+            processed += 1
+    return {"processed": processed, "skipped": skipped, "errors": errors}
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
 @router.get("/", response_class=HTMLResponse, include_in_schema=False)
-def ui_overview(request: Request) -> Response:
+def ui_overview(
+    request: Request,
+    synced: int = 0,
+    processed: int = 0,
+    skipped: int = 0,
+    errors: int = 0,
+) -> Response:
     board = build_all_draws_overview()
-    return templates.TemplateResponse(
-        request, "overview.html", {"board": board, "active": "overview"},
-    )
+    audit = build_audit_overview()
+    enriched_shortlist = [_enrich_shortlist_entry(e) for e in board.get("consensus_shortlist", [])]
+    sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
+    return templates.TemplateResponse(request, "overview.html", {
+        "board": board,
+        "audit": audit,
+        "enriched_shortlist": enriched_shortlist,
+        "sync_result": sync_result,
+        "active": "overview",
+    })
 
 
 @router.get("/session/{session}", response_class=HTMLResponse, include_in_schema=False)
-def ui_session(session: str, request: Request) -> Response:
+def ui_session(
+    session: str,
+    request: Request,
+    synced: int = 0,
+    processed: int = 0,
+    skipped: int = 0,
+    errors: int = 0,
+) -> Response:
     if session not in _VALID_SESSIONS:
         return templates.TemplateResponse(
-            request,
-            "404.html",
-            {
-                "active": None,
-                "detail": f"Session {session!r} not found. Valid sessions: Midday, Evening, Night.",
-            },
+            request, "404.html",
+            {"active": None,
+             "detail": f"Session {session!r} not found. Valid: Midday, Evening, Night."},
             status_code=404,
         )
     board = build_session_board(session)
-    return templates.TemplateResponse(
-        request, "session.html", {"board": board, "session": session, "active": session},
+    audit = build_session_audit(session)
+
+    enriched_pairs = [_enrich_pair_card(c) for c in board.get("top_pairs", [])]
+    enriched_combos = [_enrich_combo_card(c) for c in board.get("top_combinations", [])]
+    pairs_by_position = _group_pairs_by_position(enriched_pairs)
+    enriched_shortlist = [_enrich_shortlist_entry(e) for e in board.get("shortlist", [])]
+    sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
+
+    return templates.TemplateResponse(request, "session.html", {
+        "board": board,
+        "audit": audit,
+        "enriched_pairs": enriched_pairs,
+        "enriched_combos": enriched_combos,
+        "pairs_by_position": pairs_by_position,
+        "enriched_shortlist": enriched_shortlist,
+        "sync_result": sync_result,
+        "session": session,
+        "active": session,
+    })
+
+
+@router.post("/refresh", include_in_schema=False)
+def ui_refresh(next: str = Query(default="/")) -> Response:
+    """Trigger sync-latest and redirect back to the originating page."""
+    # Guard against open redirects
+    if not next.startswith("/"):
+        next = "/"
+    counts = _run_sync()
+    p, s, e = counts["processed"], counts["skipped"], counts["errors"]
+    return RedirectResponse(
+        url=f"{next}?synced=1&processed={p}&skipped={s}&errors={e}",
+        status_code=303,
     )
