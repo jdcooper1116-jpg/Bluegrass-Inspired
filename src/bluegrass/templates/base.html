@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Bluegrass{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="/">Bluegrass</a>
+    <a href="/" {% if active == "overview" %}class="active"{% endif %}>Overview</a>
+    <a href="/session/Midday" {% if active == "Midday" %}class="active"{% endif %}>Midday</a>
+    <a href="/session/Evening" {% if active == "Evening" %}class="active"{% endif %}>Evening</a>
+    <a href="/session/Night" {% if active == "Night" %}class="active"{% endif %}>Night</a>
+  </nav>
+  <div class="page">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

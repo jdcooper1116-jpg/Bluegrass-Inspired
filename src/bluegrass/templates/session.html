@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ session }} — Bluegrass{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <span class="page-title">{{ session }}</span>
+  <span class="meta-stamp">
+    Last draw&nbsp;<strong>{{ board.metadata.last_processed_draw or "none yet" }}</strong>
+  </span>
+  <span class="meta-stamp" style="margin-left:auto">
+    Generated <strong>{{ board.metadata.generated_at }}</strong>
+  </span>
+</div>
+
+<div class="rationale">{{ board.rationale }}</div>
+
+{# Section grid: top family cards #}
+<div class="section-grid">
+
+  <div class="section-col">
+    <div class="section-title">Sums</div>
+    {% for card in board.top_sums %}
+    <div class="card">
+      <div class="card-value">{{ card.value }}</div>
+      <div class="card-meta">
+        <span class="draws-since">{{ card.draws_since }} draws</span>
+        &nbsp;· last {{ card.last_seen or "—" }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="section-col">
+    <div class="section-title">Root Sums</div>
+    {% for card in board.top_root_sums %}
+    <div class="card">
+      <div class="card-value">{{ card.value }}</div>
+      <div class="card-meta">
+        <span class="draws-since">{{ card.draws_since }} draws</span>
+        &nbsp;· last {{ card.last_seen or "—" }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="section-col">
+    <div class="section-title">Pairs</div>
+    {% for card in board.top_pairs %}
+    <div class="card">
+      <div class="card-value">{{ card.value }}</div>
+      {% if card.subtype %}
+      <div class="card-subtype">{{ card.subtype }}</div>
+      {% endif %}
+      <div class="card-meta">
+        <span class="draws-since">{{ card.draws_since }} draws</span>
+        &nbsp;· last {{ card.last_seen or "—" }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="section-col">
+    <div class="section-title">Combinations</div>
+    {% for card in board.top_combinations %}
+    <div class="card">
+      <div class="card-value">{{ card.value }}</div>
+      {% if card.subtype %}
+      <div class="card-subtype">{{ card.subtype }}</div>
+      {% endif %}
+      <div class="card-meta">
+        <span class="draws-since">{{ card.draws_since }} draws</span>
+        &nbsp;· last {{ card.last_seen or "—" }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+{# Shortlist #}
+<div class="shortlist-section">
+  <div class="shortlist-title">Shortlist</div>
+  <div class="shortlist-grid">
+    {% for entry in board.shortlist %}
+    <div class="shortlist-entry">
+      <span class="entry-num">{{ loop.index }}</span>
+      <div class="entry-body">
+        <span class="badge badge-{{ entry.family }}">{{ entry.family | replace("_", " ") }}</span>
+        <div class="entry-value">{{ entry.value }}</div>
+        <div class="entry-why">{{ entry.why_flagged }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
