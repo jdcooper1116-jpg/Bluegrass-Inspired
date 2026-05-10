@@ -245,6 +245,17 @@ def test_board_session_endpoint() -> None:
     assert "metadata" in payload
 
 
+def test_board_overview_endpoint() -> None:
+    response = client.get("/board/overview")
+    assert response.status_code == 200
+    payload = response.json()
+    assert "top_sums" in payload
+    assert "consensus_shortlist" in payload
+    assert "session_overlap" in payload
+    assert "metadata" in payload
+    assert set(payload["metadata"]["sessions"]) == {"Midday", "Evening", "Night"}
+
+
 def test_board_session_rejects_invalid() -> None:
     response = client.get("/board/session/Weekend")
     assert response.status_code == 404
