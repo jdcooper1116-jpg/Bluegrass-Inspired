@@ -227,6 +227,49 @@ def test_sync_latest_engine_error_goes_to_errors(monkeypatch):
     assert "connection refused" in payload["errors"][0]["error"]
 
 
+# ---------------------------------------------------------------------------
+# Daily board endpoint
+# ---------------------------------------------------------------------------
+
+def test_board_session_endpoint() -> None:
+    response = client.get("/board/session/Midday")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["session"] == "Midday"
+    assert "top_sums" in payload
+    assert "top_root_sums" in payload
+    assert "top_pairs" in payload
+    assert "top_combinations" in payload
+    assert "shortlist" in payload
+    assert "rationale" in payload
+    assert "metadata" in payload
+
+
+def test_board_overview_endpoint() -> None:
+    response = client.get("/board/overview")
+    assert response.status_code == 200
+    payload = response.json()
+    assert "top_sums" in payload
+    assert "consensus_shortlist" in payload
+    assert "session_overlap" in payload
+    assert "metadata" in payload
+    assert set(payload["metadata"]["sessions"]) == {"Midday", "Evening", "Night"}
+
+
+def test_board_session_rejects_invalid() -> None:
+    response = client.get("/board/session/Weekend")
+    assert response.status_code == 404
+
+
+def test_board_session_metadata_shape() -> None:
+    response = client.get("/board/session/Night")
+    assert response.status_code == 200
+    meta = response.json()["metadata"]
+    assert meta["session"] == "Night"
+    assert "generated_at" in meta
+    assert "last_processed_draw" in meta
+
+
 def test_stats_session_includes_metadata() -> None:
     response = client.get("/stats/session/Night")
     assert response.status_code == 200
