@@ -158,3 +158,78 @@ def test_refresh_run_increments_on_repeated_calls() -> None:
         json={"date": "2026-05-11", "session": "Midday", "result": "456"},
     )
     assert response.json()["total_draws_processed"] == 2
+
+
+def test_refresh_run_duplicate_is_skipped() -> None:
+    payload = {"date": "2026-05-10", "session": "Midday", "result": "123"}
+    client.post("/refresh/run", json=payload)
+    response = client.post("/refresh/run", json=payload)
+    assert response.status_code == 200
+    assert response.json()["skipped"] is True
+    assert response.json()["total_draws_processed"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Sync-latest endpoint
+# ---------------------------------------------------------------------------
+
+def test_sync_latest_no_url_returns_empty(monkeypatch):
+    monkeypatch.delenv("LOTTERY_ENGINE_BASE_URL", raising=False)
+    response = client.post("/refresh/sync-latest")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["processed"] == []
+    assert payload["skipped"] == []
+
+
+def test_sync_latest_processes_new_draws(monkeypatch):
+    import bluegrass.engine.client as ec
+    raw = [
+        {"date": "2026-05-10", "session": "Midday", "result": "123"},
+        {"date": "2026-05-10", "session": "Evening", "result": "456"},
+    ]
+    monkeypatch.setenv("LOTTERY_ENGINE_BASE_URL", "http://fake")
+    monkeypatch.setattr(ec, "_http_get_json", lambda url: raw)
+    response = client.post("/refresh/sync-latest")
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload["processed"]) == 2
+    assert payload["skipped"] == []
+
+
+def test_sync_latest_skips_duplicates(monkeypatch):
+    import bluegrass.engine.client as ec
+    raw = [{"date": "2026-05-10", "session": "Night", "result": "789"}]
+    monkeypatch.setenv("LOTTERY_ENGINE_BASE_URL", "http://fake")
+    monkeypatch.setattr(ec, "_http_get_json", lambda url: raw)
+    client.post("/refresh/sync-latest")
+    response = client.post("/refresh/sync-latest")
+    payload = response.json()
+    assert len(payload["skipped"]) == 1
+    assert len(payload["processed"]) == 0
+
+
+def test_sync_latest_bad_engine_result_goes_to_errors(monkeypatch):
+    import bluegrass.engine.client as ec
+    raw = [{"date": "2026-05-10", "session": "Noon", "result": "123"}]
+    monkeypatch.setenv("LOTTERY_ENGINE_BASE_URL", "http://fake")
+    monkeypatch.setattr(ec, "_http_get_json", lambda url: raw)
+    response = client.post("/refresh/sync-latest")
+    assert response.status_code == 200
+    assert len(response.json()["errors"]) == 1
+
+
+def test_stats_session_includes_metadata() -> None:
+    response = client.get("/stats/session/Night")
+    assert response.status_code == 200
+    payload = response.json()
+    assert "metadata" in payload
+    assert payload["metadata"]["session"] == "Night"
+
+
+def test_stats_session_includes_playlist_preview() -> None:
+    response = client.get("/stats/session/Midday")
+    assert response.status_code == 200
+    payload = response.json()
+    assert "playlist_preview" in payload
+    assert len(payload["playlist_preview"]) > 0

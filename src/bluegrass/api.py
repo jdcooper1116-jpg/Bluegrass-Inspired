@@ -6,6 +6,7 @@ from bluegrass.app.dashboard import get_dashboard_payload
 from bluegrass.app.homepage import build_homepage_view, build_session_homepage_view
 from bluegrass.app.playlist import build_session_playlist, build_session_stats
 from bluegrass.app.session_cards import build_session_cards
+from bluegrass.engine.client import fetch_latest_results
 from bluegrass.engine.intake import normalize_result
 from bluegrass.research.baseline import baseline_packet_summary
 from bluegrass.research.refresh import refresh_from_result
@@ -84,3 +85,39 @@ def refresh_run(payload: dict) -> dict[str, object]:
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return refresh_from_result(result)
+
+
+@app.post("/refresh/sync-latest")
+def refresh_sync_latest() -> dict[str, object]:
+    """Fetch latest results from the engine and apply any new draws.
+
+    Skips draws already processed (idempotent). Returns processed/skipped/errors.
+    """
+    raw_rows = fetch_latest_results()
+
+    processed: list[dict] = []
+    skipped: list[dict] = []
+    errors: list[dict] = []
+
+    for raw in raw_rows:
+        try:
+            result = normalize_result(raw)
+        except ValueError as exc:
+            errors.append({"raw": raw, "error": str(exc)})
+            continue
+
+        summary = refresh_from_result(result)
+        entry = {"session": result.session, "date": result.date, "result": result.result}
+        if summary.get("skipped"):
+            skipped.append(entry)
+        else:
+            processed.append(entry)
+
+    return {
+        "processed": processed,
+        "skipped": skipped,
+        "errors": errors,
+        "processed_count": len(processed),
+        "skipped_count": len(skipped),
+        "error_count": len(errors),
+    }

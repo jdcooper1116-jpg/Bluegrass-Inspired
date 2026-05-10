@@ -89,3 +89,60 @@ def test_sum_entries_have_why_flagged() -> None:
 def test_playlist_bad_session() -> None:
     with pytest.raises(ValueError, match="session"):
         build_session_playlist("Noon")
+
+
+# --- build_session_stats new fields ---
+
+def test_session_stats_includes_metadata() -> None:
+    stats = build_session_stats("Night")
+    assert "metadata" in stats
+    assert stats["metadata"]["session"] == "Night"
+    assert stats["metadata"]["source"] == "baseline+runtime"
+    assert "last_processed_draw" in stats["metadata"]
+
+
+def test_session_stats_includes_playlist_preview() -> None:
+    stats = build_session_stats("Midday")
+    assert "playlist_preview" in stats
+    assert len(stats["playlist_preview"]) > 0
+
+
+def test_playlist_preview_has_required_keys() -> None:
+    stats = build_session_stats("Evening")
+    for entry in stats["playlist_preview"]:
+        assert "family" in entry
+        assert "value" in entry
+        assert "why_flagged" in entry
+        assert "session" in entry
+
+
+# --- ranking / diversity ---
+
+def test_shortlist_family_diversity() -> None:
+    pl = build_session_playlist("Midday", limit=20)
+    families = {e["family"] for e in pl["shortlist"]}
+    assert len(families) >= 2
+
+
+def test_shortlist_no_family_exceeds_cap() -> None:
+    pl = build_session_playlist("Night", limit=20)
+    from collections import Counter
+    counts = Counter(e["family"] for e in pl["shortlist"])
+    for fam, count in counts.items():
+        assert count <= 5, f"family {fam!r} has {count} entries, exceeds cap of 5"
+
+
+def test_shortlist_no_internal_score_field_exposed() -> None:
+    pl = build_session_playlist("Evening")
+    for entry in pl["shortlist"]:
+        assert "_score" not in entry
+
+
+def test_metadata_last_processed_draw_updates_after_refresh() -> None:
+    from bluegrass.engine.intake import EngineResult
+    from bluegrass.research.refresh import refresh_from_result
+    r = EngineResult(date="2026-05-10", session="Midday", result="123",
+                     jurisdiction="GA", game_family="Pick 3")
+    refresh_from_result(r)
+    stats = build_session_stats("Midday")
+    assert stats["metadata"]["last_processed_draw"] == "2026-05-10:Midday:123"

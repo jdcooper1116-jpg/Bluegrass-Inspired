@@ -14,6 +14,10 @@ from bluegrass.research.stats_store import load_stats_state, save_stats_state
 from bluegrass.research.sums import digit_sum, root_sum
 
 
+def _draw_id(result: EngineResult) -> str:
+    return f"{result.date}:{result.session}:{result.result}"
+
+
 def refresh_from_result(result: EngineResult) -> dict[str, Any]:
     """Incrementally update session stats for one new draw.
 
@@ -22,15 +26,31 @@ def refresh_from_result(result: EngineResult) -> dict[str, Any]:
       2. Reset draws_since to 0 for the value that just hit.
       3. Update last_seen and times_seen_runtime for the hit.
 
-    Returns a summary safe to use as an API response body.
+    Idempotent: duplicate draw IDs (date:session:result) are skipped.
+    Returns a summary with a 'skipped' boolean field.
     """
     state = load_stats_state()
     by_session: dict[str, Any] = state.setdefault("by_session", {})
 
     session = result.session
     session_state: dict[str, Any] = by_session.setdefault(
-        session, {"draws_processed": 0, "sums": {}, "root_sums": {}}
+        session, {"draws_processed": 0, "sums": {}, "root_sums": {}, "processed_draw_ids": []}
     )
+
+    draw_id = _draw_id(result)
+    processed_ids: list[str] = session_state.setdefault("processed_draw_ids", [])
+
+    if draw_id in processed_ids:
+        return {
+            "session": session,
+            "result": result.result,
+            "date": result.date,
+            "jurisdiction": result.jurisdiction,
+            "game_family": result.game_family,
+            "skipped": True,
+            "session_draws_processed": session_state.get("draws_processed", 0),
+            "total_draws_processed": state.get("total_draws_processed", 0),
+        }
 
     hit_sum = digit_sum(result.result)
     hit_rs = root_sum(result.result)
@@ -54,6 +74,7 @@ def refresh_from_result(result: EngineResult) -> dict[str, Any]:
                 family[hit_value].get("times_seen_runtime", 0) + 1
             )
 
+    processed_ids.append(draw_id)
     session_state["draws_processed"] = session_state.get("draws_processed", 0) + 1
     state["total_draws_processed"] = state.get("total_draws_processed", 0) + 1
 
@@ -67,6 +88,7 @@ def refresh_from_result(result: EngineResult) -> dict[str, Any]:
         "game_family": result.game_family,
         "hit_sum": hit_sum,
         "hit_root_sum": hit_rs,
+        "skipped": False,
         "session_draws_processed": session_state["draws_processed"],
         "total_draws_processed": state["total_draws_processed"],
     }

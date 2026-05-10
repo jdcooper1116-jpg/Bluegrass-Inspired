@@ -81,3 +81,43 @@ def test_leading_zero_result() -> None:
     assert s["result"] == "007"
     assert s["hit_sum"] == 7
     assert s["hit_root_sum"] == 7
+
+
+# --- idempotency ---
+
+def test_duplicate_draw_is_skipped() -> None:
+    r = _result("123")
+    refresh_from_result(r)
+    s = refresh_from_result(r)
+    assert s["skipped"] is True
+    state = load_stats_state()
+    assert state["by_session"]["Midday"]["draws_processed"] == 1
+    assert state["total_draws_processed"] == 1
+
+
+def test_duplicate_does_not_double_count_sums() -> None:
+    r = _result("123")
+    refresh_from_result(r)
+    refresh_from_result(r)
+    sums = load_stats_state()["by_session"]["Midday"]["sums"]
+    assert sums["6"]["times_seen_runtime"] == 1
+    assert sums["6"]["draws_since"] == 0
+
+
+def test_different_date_same_number_not_skipped() -> None:
+    refresh_from_result(_result("123", date="2026-05-10"))
+    s = refresh_from_result(_result("123", date="2026-05-11"))
+    assert s.get("skipped") is not True
+    assert s["total_draws_processed"] == 2
+
+
+def test_leading_zero_draw_id_preserved() -> None:
+    r = _result("007")
+    refresh_from_result(r)
+    s = refresh_from_result(r)
+    assert s["skipped"] is True
+
+
+def test_non_skipped_result_has_skipped_false() -> None:
+    s = refresh_from_result(_result("456"))
+    assert s["skipped"] is False
