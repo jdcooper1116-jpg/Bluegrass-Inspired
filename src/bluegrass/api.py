@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
+from bluegrass.app.audit import build_audit_overview, build_session_audit
 from bluegrass.app.board import build_session_board
 from bluegrass.app.overview import build_all_draws_overview
 from bluegrass.app.dashboard import get_dashboard_payload
@@ -160,3 +161,22 @@ def refresh_sync_latest() -> dict[str, object]:
         "skipped_count": len(skipped),
         "error_count": len(errors),
     }
+
+
+# ---------------------------------------------------------------------------
+# Audit — data fidelity cross-check against engine
+# ---------------------------------------------------------------------------
+
+@app.get("/audit/session/{session}")
+def audit_session(session: str) -> dict[str, object]:
+    """Compare Bluegrass processed state against engine freshness for one session."""
+    try:
+        return build_session_audit(session)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/audit/overview")
+def audit_overview() -> dict[str, object]:
+    """Aggregate audit across all three sessions with a single engine call."""
+    return build_audit_overview()

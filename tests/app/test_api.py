@@ -284,3 +284,33 @@ def test_stats_session_includes_playlist_preview() -> None:
     payload = response.json()
     assert "playlist_preview" in payload
     assert len(payload["playlist_preview"]) > 0
+
+
+# ---------------------------------------------------------------------------
+# Audit endpoints
+# ---------------------------------------------------------------------------
+
+def test_audit_session_endpoint() -> None:
+    response = client.get("/audit/session/Night")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["session"] == "Night"
+    assert "comparison_status" in payload
+    assert "gap_detected" in payload
+    assert "freshness_status" in payload
+    assert "engine_latest_draw" in payload
+    assert "bluegrass_last_processed_draw" in payload
+
+
+def test_audit_session_invalid_returns_404() -> None:
+    response = client.get("/audit/session/Weekend")
+    assert response.status_code == 404
+
+
+def test_audit_overview_endpoint() -> None:
+    response = client.get("/audit/overview")
+    assert response.status_code == 200
+    payload = response.json()
+    assert "sessions" in payload
+    assert "overall_status" in payload
+    assert set(payload["sessions"].keys()) == {"Midday", "Evening", "Night"}

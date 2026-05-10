@@ -4,11 +4,40 @@
 {% block content %}
 <div class="page-header">
   <span class="page-title">{{ session }}</span>
-  <span class="meta-stamp">
-    Last draw&nbsp;<strong>{{ board.metadata.last_processed_draw or "none yet" }}</strong>
+  <form method="POST" action="/refresh?next=/session/{{ session }}" style="margin-left:auto">
+    <button class="btn-refresh" type="submit">↺ Sync Latest</button>
+  </form>
+</div>
+
+{# Sync result banner #}
+{% if sync_result is not none %}
+<div class="sync-banner">
+  <span class="sync-label">Sync complete</span>
+  <span class="sync-detail">
+    {{ sync_result.processed }} processed &middot;
+    {{ sync_result.skipped }} skipped
+    {% if sync_result.errors > 0 %} &middot; {{ sync_result.errors }} errors{% endif %}
   </span>
-  <span class="meta-stamp" style="margin-left:auto">
-    Generated <strong>{{ board.metadata.generated_at }}</strong>
+</div>
+{% endif %}
+
+{# Audit strip — source of truth for freshness #}
+<div class="audit-strip">
+  <span class="freshness-badge freshness-{{ audit.freshness_status | replace('_','-') }}">
+    {{ audit.freshness_status }}
+  </span>
+  <span class="audit-field">
+    Engine: <code>{{ audit.engine_latest_draw or "—" }}</code>
+  </span>
+  <span class="audit-field">
+    Processed: <code>{{ audit.bluegrass_last_processed_draw or "—" }}</code>
+  </span>
+  {% if audit.draws_behind and audit.draws_behind > 0 %}
+  <span class="audit-warn">{{ audit.draws_behind }} draw{{ "s" if audit.draws_behind != 1 }} behind</span>
+  {% endif %}
+  <span class="audit-field">Coverage: {{ audit.coverage }}</span>
+  <span class="audit-field" style="margin-left:auto;color:var(--border)">
+    {{ audit.generated_at }}
   </span>
 </div>
 
@@ -45,28 +74,41 @@
 
   <div class="section-col">
     <div class="section-title">Pairs</div>
-    {% for card in board.top_pairs %}
-    <div class="card">
-      <div class="card-value">{{ card.value }}</div>
-      {% if card.subtype %}
-      <div class="card-subtype">{{ card.subtype }}</div>
-      {% endif %}
-      <div class="card-meta">
-        <span class="draws-since">{{ card.draws_since }} draws</span>
-        &nbsp;· last {{ card.last_seen or "—" }}
+    {% for position, position_cards in pairs_by_position %}
+    <div class="pair-group">
+      <div class="pair-group-label">{{ position | capitalize }} Pairs</div>
+      {% for card in position_cards %}
+      <div class="card" style="margin-bottom:6px">
+        <div class="card-value">{{ card.value }}</div>
+        <div style="margin-top:3px">
+          <span class="chip chip-{{ card.pair_position }}">{{ card.pair_position }}</span>
+          {% if card.play_type_label != "unknown" %}
+          <span class="chip chip-{{ card.play_type_label }}">{{ card.play_type_label }}</span>
+          {% endif %}
+        </div>
+        <div class="card-meta">
+          <span class="draws-since">{{ card.draws_since }} draws</span>
+          &nbsp;· last {{ card.last_seen or "—" }}
+        </div>
       </div>
+      {% endfor %}
     </div>
     {% endfor %}
   </div>
 
   <div class="section-col">
     <div class="section-title">Combinations</div>
-    {% for card in board.top_combinations %}
+    {% for card in enriched_combos %}
     <div class="card">
       <div class="card-value">{{ card.value }}</div>
-      {% if card.subtype %}
-      <div class="card-subtype">{{ card.subtype }}</div>
-      {% endif %}
+      <div style="margin-top:3px">
+        {% if card.digit_pattern != "unknown" %}
+        <span class="chip chip-{{ card.digit_pattern }}">{{ card.digit_pattern }}</span>
+        {% endif %}
+        {% if card.play_type_label != "unknown" %}
+        <span class="chip chip-{{ card.play_type_label }}">{{ card.play_type_label }}</span>
+        {% endif %}
+      </div>
       <div class="card-meta">
         <span class="draws-since">{{ card.draws_since }} draws</span>
         &nbsp;· last {{ card.last_seen or "—" }}
@@ -77,16 +119,27 @@
 
 </div>
 
-{# Shortlist #}
+{# Shortlist with classification chips #}
 <div class="shortlist-section">
   <div class="shortlist-title">Shortlist</div>
   <div class="shortlist-grid">
-    {% for entry in board.shortlist %}
+    {% for entry in enriched_shortlist %}
     <div class="shortlist-entry">
       <span class="entry-num">{{ loop.index }}</span>
       <div class="entry-body">
         <span class="badge badge-{{ entry.family }}">{{ entry.family | replace("_", " ") }}</span>
         <div class="entry-value">{{ entry.value }}</div>
+        <div style="margin-top:3px">
+          {% if entry.digit_pattern is defined and entry.digit_pattern != "unknown" %}
+          <span class="chip chip-{{ entry.digit_pattern }}">{{ entry.digit_pattern }}</span>
+          {% endif %}
+          {% if entry.play_type_label is defined and entry.play_type_label != "unknown" %}
+          <span class="chip chip-{{ entry.play_type_label }}">{{ entry.play_type_label }}</span>
+          {% endif %}
+          {% if entry.pair_position is defined and entry.pair_position != "unknown" %}
+          <span class="chip chip-{{ entry.pair_position }}">{{ entry.pair_position }}</span>
+          {% endif %}
+        </div>
         <div class="entry-why">{{ entry.why_flagged }}</div>
       </div>
     </div>

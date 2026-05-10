@@ -5,7 +5,54 @@
 <div class="page-header">
   <span class="page-title">All Sessions Overview</span>
   <span class="meta-stamp">Generated <strong>{{ board.metadata.generated_at }}</strong></span>
+  <form method="POST" action="/refresh?next=/" style="margin-left:auto">
+    <button class="btn-refresh" type="submit">↺ Sync Latest</button>
+  </form>
 </div>
+
+{# Sync result banner #}
+{% if sync_result is not none %}
+<div class="sync-banner">
+  <span class="sync-label">Sync complete</span>
+  <span class="sync-detail">
+    {{ sync_result.processed }} processed &middot;
+    {{ sync_result.skipped }} skipped
+    {% if sync_result.errors > 0 %} &middot; {{ sync_result.errors }} errors{% endif %}
+  </span>
+</div>
+{% endif %}
+
+{# Session freshness table #}
+<table class="freshness-table">
+  <thead>
+    <tr>
+      <th>Session</th>
+      <th>Status</th>
+      <th>Engine latest</th>
+      <th>Last processed</th>
+      <th>Coverage</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for sess in ["Midday", "Evening", "Night"] %}
+    {% set sa = audit.sessions[sess] %}
+    <tr>
+      <td><strong>{{ sess }}</strong></td>
+      <td>
+        <span class="freshness-badge freshness-{{ sa.freshness_status | replace('_','-') }}">
+          {{ sa.freshness_status }}
+        </span>
+        {% if sa.draws_behind and sa.draws_behind > 0 %}
+        <span class="audit-draws-behind">&nbsp;({{ sa.draws_behind }}d behind)</span>
+        {% endif %}
+      </td>
+      <td><code>{{ sa.engine_latest_draw or "—" }}</code></td>
+      <td><code>{{ sa.bluegrass_last_processed_draw or "—" }}</code></td>
+      <td>{{ sa.coverage }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
 <div class="rationale">{{ board.rationale }}</div>
 
@@ -109,16 +156,27 @@
 </div>
 {% endif %}
 
-{# Consensus shortlist #}
+{# Consensus shortlist with classification chips #}
 <div class="shortlist-section">
   <div class="shortlist-title">Consensus Shortlist</div>
   <div class="shortlist-grid">
-    {% for entry in board.consensus_shortlist %}
+    {% for entry in enriched_shortlist %}
     <div class="shortlist-entry">
       <span class="entry-num">{{ loop.index }}</span>
       <div class="entry-body">
         <span class="badge badge-{{ entry.family }}">{{ entry.family | replace("_", " ") }}</span>
         <div class="entry-value">{{ entry.value }}</div>
+        <div style="margin-top:3px">
+          {% if entry.digit_pattern is defined and entry.digit_pattern != "unknown" %}
+          <span class="chip chip-{{ entry.digit_pattern }}">{{ entry.digit_pattern }}</span>
+          {% endif %}
+          {% if entry.play_type_label is defined and entry.play_type_label != "unknown" %}
+          <span class="chip chip-{{ entry.play_type_label }}">{{ entry.play_type_label }}</span>
+          {% endif %}
+          {% if entry.pair_position is defined and entry.pair_position != "unknown" %}
+          <span class="chip chip-{{ entry.pair_position }}">{{ entry.pair_position }}</span>
+          {% endif %}
+        </div>
         <div class="entry-why">{{ entry.why_flagged }}</div>
         {% if entry.sessions_present %}
         <div class="sessions-badges" style="margin-top:4px">

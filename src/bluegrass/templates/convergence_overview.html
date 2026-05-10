@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Convergence Overview — Bluegrass{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <span class="page-title">Convergence Overview</span>
+  <span class="meta-stamp">Generated <strong>{{ conv.metadata.generated_at }}</strong></span>
+</div>
+
+{# Trust banners — one per session #}
+<div class="conv-trust-row">
+  {% for sess in ["Midday", "Evening", "Night"] %}
+  {% set sa = audit.sessions[sess] %}
+  <div class="conv-trust-cell">
+    <span class="trust-session">{{ sess }}</span>
+    <span class="freshness-badge freshness-{{ sa.freshness_status | replace('_','-') }}">{{ sa.freshness_status }}</span>
+    {% if sa.draws_behind and sa.draws_behind > 0 %}
+    <span class="audit-draws-behind">{{ sa.draws_behind }}d behind</span>
+    {% endif %}
+    <code class="trust-draw">{{ sa.bluegrass_last_processed_draw or "—" }}</code>
+  </div>
+  {% endfor %}
+</div>
+
+{# Session summary strip #}
+<div class="conv-session-strip">
+  {% for sess in ["Midday", "Evening", "Night"] %}
+  {% set s = conv.session_summaries[sess] %}
+  <div class="sess-summary-card">
+    <div class="sess-summary-name">{{ sess }}</div>
+    <div class="sess-summary-tiers">
+      <span class="tier-pill tier-1">T1 <strong>{{ s.tier_1_count }}</strong></span>
+      <span class="tier-pill tier-2">T2 <strong>{{ s.tier_2_count }}</strong></span>
+      <span class="tier-pill tier-3">T3 <strong>{{ s.tier_3_count }}</strong></span>
+    </div>
+    <div class="sess-summary-total">{{ s.total_candidates }} total</div>
+    <a class="sess-summary-link" href="/convergence/session/{{ sess }}">View →</a>
+  </div>
+  {% endfor %}
+</div>
+
+{# Bucket A: 2+ sessions #}
+<div class="conv-bucket-header">
+  <span class="conv-bucket-title">Bucket A — Multi-Session</span>
+  <span class="conv-bucket-count">{{ conv.multi_session_candidates | length }}</span>
+</div>
+
+{% if conv.multi_session_candidates %}
+<div class="conv-grid">
+  {% for c in conv.multi_session_candidates %}
+  <div class="conv-card tier-{{ c.tier }}-card">
+    <div class="conv-card-header">
+      <span class="conv-number">{{ c.number }}</span>
+      <span class="tier-badge tier-{{ c.tier }}">T{{ c.tier }}</span>
+      <span class="conv-score">{{ "%.2f"|format(c.convergence_score) }}</span>
+    </div>
+    <div class="sessions-badges" style="margin-bottom:4px">
+      {% for s in c.sessions_present %}<span class="session-badge">{{ s }}</span>{% endfor %}
+    </div>
+    <div class="conv-chips">
+      <span class="chip chip-{{ c.digit_pattern }}">{{ c.digit_pattern }}</span>
+      {% if c.signals.sum_match %}<span class="chip chip-signal">Σ={{ c.signals.sum_value }}</span>{% endif %}
+      {% if c.signals.root_sum_match %}<span class="chip chip-signal">√={{ c.signals.root_sum_value }}</span>{% endif %}
+      {% if c.signals.straight_match %}<span class="chip chip-straight">straight</span>{% endif %}
+      {% if c.signals.box_family_match %}<span class="chip chip-box">box</span>{% endif %}
+    </div>
+    <div class="conv-rationale">{{ c.rationale }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="conv-empty">No multi-session candidates today.</div>
+{% endif %}
+
+{# Bucket B: single-session + cross-session overview support #}
+<div class="conv-bucket-header" style="margin-top:var(--gap)">
+  <span class="conv-bucket-title">Bucket B — Overview Supported</span>
+  <span class="conv-bucket-count">{{ conv.overview_supported_candidates | length }}</span>
+</div>
+
+{% if conv.overview_supported_candidates %}
+<div class="conv-grid">
+  {% for c in conv.overview_supported_candidates %}
+  <div class="conv-card tier-{{ c.tier }}-card">
+    <div class="conv-card-header">
+      <span class="conv-number">{{ c.number }}</span>
+      <span class="tier-badge tier-{{ c.tier }}">T{{ c.tier }}</span>
+      <span class="conv-score">{{ "%.2f"|format(c.convergence_score) }}</span>
+    </div>
+    <div class="sessions-badges" style="margin-bottom:4px">
+      {% for s in c.sessions_present %}<span class="session-badge">{{ s }}</span>{% endfor %}
+    </div>
+    <div class="conv-chips">
+      <span class="chip chip-{{ c.digit_pattern }}">{{ c.digit_pattern }}</span>
+      {% if c.signals.sum_match %}<span class="chip chip-signal">Σ={{ c.signals.sum_value }}</span>{% endif %}
+      {% if c.signals.root_sum_match %}<span class="chip chip-signal">√={{ c.signals.root_sum_value }}</span>{% endif %}
+      {% if c.signals.straight_match %}<span class="chip chip-straight">straight</span>{% endif %}
+      {% if c.signals.box_family_match %}<span class="chip chip-box">box</span>{% endif %}
+    </div>
+    <div class="conv-rationale">{{ c.rationale }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="conv-empty">No overview-supported candidates today.</div>
+{% endif %}
+{% endblock %}
