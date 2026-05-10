@@ -56,3 +56,15 @@ def test_dashboard_session_endpoint() -> None:
 def test_dashboard_session_endpoint_rejects_invalid_session() -> None:
     response = client.get("/dashboard/session/Weekend")
     assert response.status_code == 404
+
+
+def test_dashboard_session_cards_endpoint() -> None:
+    response = client.get("/dashboard/session/Night/cards")
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["session"] == "Night"
+    assert "stats_header" in payload
+    assert "pair_cards" in payload
+    assert "combo_cards" in payload
+    assert "why_flagged_summary" in payload
