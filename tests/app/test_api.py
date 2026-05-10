@@ -182,24 +182,30 @@ def test_sync_latest_no_url_returns_empty(monkeypatch):
     assert payload["skipped"] == []
 
 
+def _engine_row(date: str, draw_time: str, result: str) -> dict:
+    return {"draw_date": date, "draw_time": draw_time, "winning_number": result, "state": "GA"}
+
+
 def test_sync_latest_processes_new_draws(monkeypatch):
     import bluegrass.engine.client as ec
     raw = [
-        {"date": "2026-05-10", "session": "Midday", "result": "123"},
-        {"date": "2026-05-10", "session": "Evening", "result": "456"},
+        _engine_row("2026-05-10", "midday", "123"),
+        _engine_row("2026-05-10", "evening", "456"),
+        _engine_row("2026-05-10", "night", "789"),
     ]
     monkeypatch.setenv("LOTTERY_ENGINE_BASE_URL", "http://fake")
     monkeypatch.setattr(ec, "_http_get_json", lambda url: raw)
     response = client.post("/refresh/sync-latest")
     assert response.status_code == 200
     payload = response.json()
-    assert len(payload["processed"]) == 2
+    assert len(payload["processed"]) == 3
     assert payload["skipped"] == []
+    assert payload["errors"] == []
 
 
 def test_sync_latest_skips_duplicates(monkeypatch):
     import bluegrass.engine.client as ec
-    raw = [{"date": "2026-05-10", "session": "Night", "result": "789"}]
+    raw = [_engine_row("2026-05-10", "night", "789")]
     monkeypatch.setenv("LOTTERY_ENGINE_BASE_URL", "http://fake")
     monkeypatch.setattr(ec, "_http_get_json", lambda url: raw)
     client.post("/refresh/sync-latest")
@@ -209,14 +215,16 @@ def test_sync_latest_skips_duplicates(monkeypatch):
     assert len(payload["processed"]) == 0
 
 
-def test_sync_latest_bad_engine_result_goes_to_errors(monkeypatch):
+def test_sync_latest_engine_error_goes_to_errors(monkeypatch):
     import bluegrass.engine.client as ec
-    raw = [{"date": "2026-05-10", "session": "Noon", "result": "123"}]
     monkeypatch.setenv("LOTTERY_ENGINE_BASE_URL", "http://fake")
-    monkeypatch.setattr(ec, "_http_get_json", lambda url: raw)
+    monkeypatch.setattr(ec, "_http_get_json",
+                        lambda url: (_ for _ in ()).throw(OSError("connection refused")))
     response = client.post("/refresh/sync-latest")
     assert response.status_code == 200
-    assert len(response.json()["errors"]) == 1
+    payload = response.json()
+    assert payload["error_count"] == 1
+    assert "connection refused" in payload["errors"][0]["error"]
 
 
 def test_stats_session_includes_metadata() -> None:

@@ -6,7 +6,7 @@ from bluegrass.app.dashboard import get_dashboard_payload
 from bluegrass.app.homepage import build_homepage_view, build_session_homepage_view
 from bluegrass.app.playlist import build_session_playlist, build_session_stats
 from bluegrass.app.session_cards import build_session_cards
-from bluegrass.engine.client import fetch_latest_results
+from bluegrass.engine.client import EngineClientError, fetch_latest_results
 from bluegrass.engine.intake import normalize_result
 from bluegrass.research.baseline import baseline_packet_summary
 from bluegrass.research.refresh import refresh_from_result
@@ -93,7 +93,17 @@ def refresh_sync_latest() -> dict[str, object]:
 
     Skips draws already processed (idempotent). Returns processed/skipped/errors.
     """
-    raw_rows = fetch_latest_results()
+    try:
+        raw_rows = fetch_latest_results()
+    except EngineClientError as exc:
+        return {
+            "processed": [],
+            "skipped": [],
+            "errors": [{"error": str(exc)}],
+            "processed_count": 0,
+            "skipped_count": 0,
+            "error_count": 1,
+        }
 
     processed: list[dict] = []
     skipped: list[dict] = []
