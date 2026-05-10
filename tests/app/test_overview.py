@@ -161,6 +161,38 @@ def test_consensus_shortlist_no_internal_score() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Subtype field — present for pairs/combos, absent for sums/root_sums
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("section", ("top_pairs", "top_combinations"))
+def test_pair_combo_section_cards_have_subtype(section: str) -> None:
+    ov = build_all_draws_overview()
+    for card in ov[section]:
+        assert "subtype" in card, f"{section} card missing subtype"
+
+
+@pytest.mark.parametrize("section", ("top_sums", "top_root_sums"))
+def test_sum_section_cards_omit_subtype(section: str) -> None:
+    ov = build_all_draws_overview()
+    for card in ov[section]:
+        assert "subtype" not in card, f"{section} card should not have subtype"
+
+
+def test_consensus_shortlist_pair_combo_entries_have_subtype() -> None:
+    ov = build_all_draws_overview()
+    for entry in ov["consensus_shortlist"]:
+        if entry["family"] in ("pair", "combination"):
+            assert "subtype" in entry, f"{entry['family']} shortlist entry missing subtype"
+
+
+def test_consensus_shortlist_sum_entries_omit_subtype() -> None:
+    ov = build_all_draws_overview()
+    for entry in ov["consensus_shortlist"]:
+        if entry["family"] in ("sum", "root_sum"):
+            assert "subtype" not in entry, f"{entry['family']} shortlist entry should not have subtype"
+
+
+# ---------------------------------------------------------------------------
 # Rationale
 # ---------------------------------------------------------------------------
 
