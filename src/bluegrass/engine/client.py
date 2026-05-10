@@ -35,22 +35,29 @@ def _http_get_json(url: str) -> Any:
 
 
 def _build_url(base_url: str, start: date, end: date) -> str:
-    params = urlencode({
+    # draw_times must use raw commas — urlencode would produce %2C which the engine rejects
+    base_params = urlencode({
         "state": "GA",
         "game_type": "pick3",
-        "draw_times": "midday,evening,night",
         "start": start.isoformat(),
         "end": end.isoformat(),
     })
-    return f"{base_url}/draws?{params}"
+    return f"{base_url}/draws?{base_params}&draw_times=midday,evening,night"
 
 
 def _parse_rows(data: Any) -> list[dict[str, Any]]:
     """Extract and normalize rows from an engine /draws response.
 
-    Raises EngineClientError if the top-level shape is not a list.
+    Accepts either a bare list or the engine envelope {"draws": [...], ...}.
+    Raises EngineClientError on unrecognized shapes.
     Rows missing draw_time or winning_number are silently skipped.
     """
+    if isinstance(data, dict):
+        if "draws" not in data:
+            raise EngineClientError(
+                f"expected list from engine /draws, got dict without 'draws' key"
+            )
+        data = data["draws"]
     if not isinstance(data, list):
         raise EngineClientError(
             f"expected list from engine /draws, got {type(data).__name__}"

@@ -67,6 +67,21 @@ def test_query_params_present(monkeypatch):
     assert "end=" in url
 
 
+def test_draw_times_commas_not_percent_encoded(monkeypatch):
+    """Engine requires raw commas; %2C causes 403."""
+    seen_urls: list[str] = []
+
+    def capture(url: str):
+        seen_urls.append(url)
+        return _three_sessions()
+
+    monkeypatch.setenv("LOTTERY_ENGINE_BASE_URL", "http://engine")
+    monkeypatch.setattr("bluegrass.engine.client._http_get_json", capture)
+    fetch_latest_results()
+    assert "%2C" not in seen_urls[0], "commas must not be percent-encoded in draw_times"
+    assert "midday,evening,night" in seen_urls[0]
+
+
 # ---------------------------------------------------------------------------
 # draw_time → session mapping
 # ---------------------------------------------------------------------------
@@ -186,7 +201,26 @@ def test_http_error_raises_engine_client_error(monkeypatch):
         fetch_latest_results()
 
 
+def test_envelope_response_unwrapped(monkeypatch):
+    """Real engine wraps rows in {"draws": [...], "total_count": N, ...}."""
+    envelope = {
+        "state": "GA",
+        "game_type": "pick3",
+        "start_date": "2026-05-03",
+        "end_date": "2026-05-10",
+        "total_count": 3,
+        "draws": _three_sessions("2026-05-10"),
+    }
+    monkeypatch.setenv("LOTTERY_ENGINE_BASE_URL", "http://engine")
+    monkeypatch.setattr("bluegrass.engine.client._http_get_json", lambda url: envelope)
+    results = fetch_latest_results()
+    assert len(results) == 3
+    sessions = {r["session"] for r in results}
+    assert sessions == {"Midday", "Evening", "Night"}
+
+
 def test_non_list_response_raises_engine_client_error(monkeypatch):
+    """A dict without a 'draws' key is unrecognized — raise clearly."""
     monkeypatch.setenv("LOTTERY_ENGINE_BASE_URL", "http://engine")
     monkeypatch.setattr("bluegrass.engine.client._http_get_json", lambda url: {"error": "bad"})
     with pytest.raises(EngineClientError, match="expected list"):
