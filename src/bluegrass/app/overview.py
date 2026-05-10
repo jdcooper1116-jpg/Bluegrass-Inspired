@@ -74,6 +74,8 @@ def _aggregate_section(
                 by_value[key]["draws_since"] = card["draws_since"]
                 by_value[key]["why_flagged"] = card.get("why_flagged", "")
                 by_value[key]["last_seen"] = card.get("last_seen", "")
+                if "subtype" in card:
+                    by_value[key]["subtype"] = card["subtype"]
 
     # Score with session boost and sort
     all_rows = list(by_value.values())
@@ -130,6 +132,8 @@ def _consensus_shortlist(
                     by_value[key]["draws_since"] = card["draws_since"]
                     by_value[key]["why_flagged"] = card.get("why_flagged", "")
                     by_value[key]["last_seen"] = card.get("last_seen", "")
+                    if "subtype" in card:
+                        by_value[key]["subtype"] = card["subtype"]
 
         rows = list(by_value.values())
         max_ds = _family_max_ds(rows) or 1.0
