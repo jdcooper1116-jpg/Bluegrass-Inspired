@@ -23,6 +23,7 @@ _DRAW_TIME_TO_SESSION: dict[str, str] = {
 }
 _ALL_SESSIONS = frozenset(_DRAW_TIME_TO_SESSION.values())
 _WINDOWS = (7, 14, 30)
+_SESSION_ORDER: dict[str, int] = {"Midday": 0, "Evening": 1, "Night": 2}
 
 
 class EngineClientError(Exception):
@@ -109,6 +110,20 @@ def _fetch_window(base_url: str, days: int) -> list[dict[str, Any]]:
     except Exception as exc:
         raise EngineClientError(str(exc)) from exc
     return _parse_rows(data)
+
+
+def fetch_all_draws(days: int = 30) -> list[dict[str, Any]]:
+    """Return every draw in the rolling window, all sessions, sorted chronologically.
+
+    Same-day draws are ordered Midday → Evening → Night (draw time order),
+    not alphabetically by session name.
+    Returns [] when LOTTERY_ENGINE_BASE_URL is not set.
+    """
+    base_url = os.environ.get("LOTTERY_ENGINE_BASE_URL", "").rstrip("/")
+    if not base_url:
+        return []
+    rows = _fetch_window(base_url, days)
+    return sorted(rows, key=lambda r: (r["date"], _SESSION_ORDER.get(r["session"], 99)))
 
 
 def fetch_latest_results(session: str | None = None) -> list[dict[str, Any]]:

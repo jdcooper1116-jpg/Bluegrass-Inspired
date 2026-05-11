@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import sys
 import types
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -82,7 +82,6 @@ sys.modules.setdefault("bluegrass.app.convergence", _mock_conv)
 from fastapi.testclient import TestClient  # noqa: E402
 
 from bluegrass.api import app  # noqa: E402
-from bluegrass.app.play_builder import build_play_builder_overview, build_play_builder_session  # noqa: E402
 from bluegrass.research.stats_store import reset_stats_state  # noqa: E402
 
 client = TestClient(app)
@@ -91,9 +90,9 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def clean_state():
     reset_stats_state()
-    _mock_conv.build_session_convergence.side_effect = _make_conv
-    _mock_conv.build_convergence_overview.return_value = _make_overview()
-    yield
+    # Patch the names as bound inside play_builder — works regardless of sys.modules ordering
+    with patch("bluegrass.app.play_builder.build_session_convergence", side_effect=_make_conv),          patch("bluegrass.app.play_builder.build_convergence_overview", return_value=_make_overview()):
+        yield
     reset_stats_state()
 
 
@@ -128,11 +127,7 @@ def test_pb_overview_shows_tier_counts() -> None:
 
 def test_pb_overview_shows_candidate_numbers() -> None:
     body = client.get("/plays").text
-    vm = build_play_builder_overview()
-    nums = []
-    for card in vm["session_cards"].values():
-        nums.extend(c["number"] for c in card["top_candidates"])
-    assert any(n in body for n in nums)
+    assert "123" in body
 
 
 def test_pb_overview_multi_session_section() -> None:
@@ -166,9 +161,7 @@ def test_pb_session_shows_suggested_plays() -> None:
 
 def test_pb_session_shows_candidate_number() -> None:
     body = client.get("/plays/session/Midday").text
-    vm = build_play_builder_session("Midday")
-    nums = [c["number"] for c in vm["plays"]["tier_1"] + vm["plays"]["tier_2"] + vm["plays"]["tier_3"]]
-    assert any(n in body for n in nums)
+    assert "123" in body
 
 
 def test_pb_session_rail_has_due_sums() -> None:

@@ -1,123 +1,86 @@
-{% extends "base.html" %}
-{% block title %}Convergence · {{ session }} — Bluegrass{% endblock %}
+{% extends "base_pb.html" %}
+
+{% block title %}{{ vm.session }} Convergence · Bluegrass{% endblock %}
+
+{% block topnav_right %}
+<form method="post" action="/refresh" style="display:inline">
+  <input type="hidden" name="next" value="/convergence/session/{{ vm.session }}">
+  <button type="submit" class="btn-pb-refresh">↻ Sync Latest</button>
+</form>
+{% endblock %}
+
+{% block sidebar_freshness %}
+<div class="sb-freshness-row">
+  <span>Freshness</span>
+  <span style="font-size:10px;color:var(--muted)">{{ vm.metadata.last_processed_draw }}</span>
+</div>
+<div class="sb-freshness-row">
+  <span>Engine:</span>
+  <span style="font-size:10px;color:var(--muted)">{{ vm.metadata.generated_at[:10] }}</span>
+</div>
+<div class="sb-freshness-row">
+  <span>Processed:</span>
+  <span>{{ vm.total_candidates }}</span>
+</div>
+{% endblock %}
+
+{% block rail %}
+<div class="rail-section">
+  <div class="rail-section-label">Signal Pools</div>
+
+  <div class="rail-item" style="flex-direction:column;align-items:flex-start;gap:2px;margin-bottom:8px">
+    <span style="font-size:11px;font-weight:600;color:var(--fg)">Due Sums</span>
+    {% for e in vm.signal_pools.sums[:5] %}
+    <span style="font-size:10px;color:var(--muted)">{{ e.value }} ({{ e.draws_since }}d)</span>
+    {% endfor %}
+  </div>
+
+  <div class="rail-item" style="flex-direction:column;align-items:flex-start;gap:2px;margin-bottom:8px">
+    <span style="font-size:11px;font-weight:600;color:var(--fg)">Due Roots</span>
+    {% for e in vm.signal_pools.root_sums[:5] %}
+    <span style="font-size:10px;color:var(--muted)">{{ e.value }} ({{ e.draws_since }}d)</span>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <span class="page-title">Convergence · {{ session }}</span>
-  <span class="meta-stamp">Generated <strong>{{ conv.metadata.generated_at }}</strong></span>
+
+<div class="pb-page-header">
+  <h1 class="pb-page-title">{{ vm.session }} Convergence</h1>
+  <span class="pb-page-sub">{{ vm.total_candidates }} candidates · T1:{{ vm.tier_1_count }} T2:{{ vm.tier_2_count }} T3:{{ vm.tier_3_count }}</span>
 </div>
 
-{# Trust banner #}
-<div class="audit-strip">
-  <span class="freshness-badge freshness-{{ audit.freshness_status | replace('_','-') }}">
-    {{ audit.freshness_status }}
+{% if sync_result %}
+<div class="pb-sync-banner">
+  <span class="sync-label">Synced</span>
+  <span class="sync-detail">
+    Processed: {{ sync_result.processed }} · {{ sync_result.skipped }} skipped
+    {% if sync_result.errors %} · {{ sync_result.errors }} errors{% endif %}
   </span>
-  <span class="audit-field">Engine: <code>{{ audit.engine_latest_draw or "—" }}</code></span>
-  <span class="audit-field">Processed: <code>{{ audit.bluegrass_last_processed_draw or "—" }}</code></span>
-  {% if audit.draws_behind and audit.draws_behind > 0 %}
-  <span class="audit-warn">{{ audit.draws_behind }} draw{{ "s" if audit.draws_behind != 1 }} behind</span>
-  {% endif %}
-  <span class="audit-field">Coverage: {{ audit.coverage }}</span>
-  <span class="audit-field" style="margin-left:auto;color:var(--border)">{{ audit.generated_at }}</span>
 </div>
+{% endif %}
 
-{# Tier summary strip #}
-<div class="conv-tier-strip">
-  <span class="tier-pill tier-1">T1 <strong>{{ conv.tier_1_count }}</strong></span>
-  <span class="tier-pill tier-2">T2 <strong>{{ conv.tier_2_count }}</strong></span>
-  <span class="tier-pill tier-3">T3 <strong>{{ conv.tier_3_count }}</strong></span>
-  <span class="conv-total">{{ conv.total_candidates }} candidates</span>
+{% for tier_num, tier_label in [(1, "T1"), (2, "T2"), (3, "T3")] %}
+{% set tier_candidates = vm.candidates | selectattr("tier", "equalto", tier_num) | list %}
+{% if tier_candidates %}
+<div class="pb-section-title">
+  {{ tier_label }} — Tier {{ tier_num }}
+  <span class="count-badge">{{ tier_candidates | length }}</span>
 </div>
-
-{# Candidate grid #}
-<div class="conv-grid">
-  {% for c in conv.candidates %}
-  <div class="conv-card tier-{{ c.tier }}-card">
-    <div class="conv-card-header">
-      <span class="conv-number">{{ c.number }}</span>
+<div class="play-list">
+  {% for c in tier_candidates %}
+  <div class="play-list-card">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="play-number">{{ c.number }}</span>
       <span class="tier-badge tier-{{ c.tier }}">T{{ c.tier }}</span>
-      <span class="conv-score">{{ "%.2f"|format(c.convergence_score) }}</span>
+      <span style="font-size:11px;color:var(--muted)">{{ c.convergence_score }}</span>
     </div>
-    <div class="conv-chips">
-      <span class="chip chip-{{ c.digit_pattern }}">{{ c.digit_pattern }}</span>
-      {% if c.signals.sum_match %}
-      <span class="chip chip-signal">Σ={{ c.signals.sum_value }}{% if c.signals.sum_rank and c.signals.sum_rank <= 3 %}★{% endif %}</span>
-      {% endif %}
-      {% if c.signals.root_sum_match %}
-      <span class="chip chip-signal">√={{ c.signals.root_sum_value }}</span>
-      {% endif %}
-      {% if c.signals.straight_match %}
-      <span class="chip chip-straight">straight#{{ c.signals.straight_rank }}</span>
-      {% endif %}
-      {% if c.signals.box_family_match %}
-      <span class="chip chip-box">box={{ c.signals.box_family }}</span>
-      {% endif %}
-      {% if c.in_combo_pool %}
-      <span class="chip chip-combo-pool">watchlist</span>
-      {% endif %}
-    </div>
-    {% if c.signals.pair_hit_count > 0 %}
-    <div class="conv-pairs">
-      {% for ph in c.signals.pair_hits %}
-      <span class="chip chip-pair-hit">{{ ph }}</span>
-      {% endfor %}
-    </div>
-    {% endif %}
-    {# Evidence row / rationale #}
-    <div class="conv-rationale">{{ c.rationale }}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">{{ c.rationale }}</div>
   </div>
   {% endfor %}
 </div>
+{% endif %}
+{% endfor %}
 
-{# Signal pools — collapsed #}
-<details class="conv-pools">
-  <summary class="conv-pools-title">Signal Pools</summary>
-
-  <div class="pools-grid">
-    <div class="pool-col">
-      <div class="pool-label">Sums</div>
-      {% for e in conv.signal_pools.sums %}
-      <div class="pool-row"><span class="pool-rank">#{{ e.rank }}</span> {{ e.value }} <span class="pool-ds">{{ e.draws_since }}d</span></div>
-      {% endfor %}
-    </div>
-    <div class="pool-col">
-      <div class="pool-label">Root Sums</div>
-      {% for e in conv.signal_pools.root_sums %}
-      <div class="pool-row"><span class="pool-rank">#{{ e.rank }}</span> {{ e.value }} <span class="pool-ds">{{ e.draws_since }}d</span></div>
-      {% endfor %}
-    </div>
-    <div class="pool-col">
-      <div class="pool-label">Straight Combos</div>
-      {% for e in conv.signal_pools.straight_combos %}
-      <div class="pool-row"><span class="pool-rank">#{{ e.rank }}</span> {{ e.value }} <span class="pool-ds">{{ e.draws_since }}d</span></div>
-      {% endfor %}
-    </div>
-    <div class="pool-col">
-      <div class="pool-label">Box Combos</div>
-      {% for e in conv.signal_pools.box_combos %}
-      <div class="pool-row"><span class="pool-rank">#{{ e.rank }}</span> {{ e.value }} <span class="pool-ds">{{ e.draws_since }}d</span></div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="pools-grid" style="margin-top:var(--gap)">
-    {% for st in ["front_straight","front_box","back_straight","back_box","split_straight","split_box"] %}
-    <div class="pool-col">
-      <div class="pool-label">{{ st | replace("_", " ") | title }}</div>
-      {% for e in conv.signal_pools.pairs_by_subtype[st] %}
-      <div class="pool-row"><span class="pool-rank">#{{ e.rank }}</span> {{ e.value }} <span class="pool-ds">{{ e.draws_since }}d</span></div>
-      {% endfor %}
-      {% if not conv.signal_pools.pairs_by_subtype[st] %}
-      <div class="pool-row" style="color:var(--border)">—</div>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </div>
-</details>
-
-{# T1+T2 number export #}
-<div class="conv-export">
-  <div class="conv-export-label">Numbers (T1 + T2)</div>
-  <textarea class="conv-export-box" rows="3" readonly>{% for c in conv.candidates if c.tier <= 2 %}{{ c.number }} {% endfor %}</textarea>
-</div>
 {% endblock %}

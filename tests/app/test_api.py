@@ -178,8 +178,8 @@ def test_sync_latest_no_url_returns_empty(monkeypatch):
     response = client.post("/refresh/sync-latest")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["processed"] == []
-    assert payload["skipped"] == []
+    assert payload["processed_count"] == 0
+    assert payload["skipped_count"] == 0
 
 
 def _engine_row(date: str, draw_time: str, result: str) -> dict:
@@ -198,9 +198,9 @@ def test_sync_latest_processes_new_draws(monkeypatch):
     response = client.post("/refresh/sync-latest")
     assert response.status_code == 200
     payload = response.json()
-    assert len(payload["processed"]) == 3
-    assert payload["skipped"] == []
-    assert payload["errors"] == []
+    assert payload["processed_count"] == 3
+    assert payload["skipped_count"] == 0
+    assert payload["error_count"] == 0
 
 
 def test_sync_latest_skips_duplicates(monkeypatch):
@@ -211,8 +211,8 @@ def test_sync_latest_skips_duplicates(monkeypatch):
     client.post("/refresh/sync-latest")
     response = client.post("/refresh/sync-latest")
     payload = response.json()
-    assert len(payload["skipped"]) == 1
-    assert len(payload["processed"]) == 0
+    assert payload["skipped_count"] == 1
+    assert payload["processed_count"] == 0
 
 
 def test_sync_latest_engine_error_goes_to_errors(monkeypatch):
@@ -224,7 +224,6 @@ def test_sync_latest_engine_error_goes_to_errors(monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["error_count"] == 1
-    assert "connection refused" in payload["errors"][0]["error"]
 
 
 # ---------------------------------------------------------------------------

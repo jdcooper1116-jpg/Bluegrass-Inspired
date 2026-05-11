@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncGenerator
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -18,7 +21,32 @@ from bluegrass.frontend import router as frontend_router
 from bluegrass.research.baseline import baseline_packet_summary
 from bluegrass.research.refresh import refresh_from_result
 
-app = FastAPI(title="Bluegrass Baseline API", version="0.2.0")
+_log = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """On startup: apply any missing draws, then start the background scheduler."""
+    try:
+        from bluegrass.research.catchup import run_catchup
+        result = run_catchup()
+        _log.info(
+            "startup catch-up: applied=%d skipped=%d errors=%d",
+            result["applied"], result["skipped"], result["errors"],
+        )
+    except Exception:
+        _log.exception("startup catch-up failed")
+
+    try:
+        from bluegrass.research.scheduler import start_scheduler
+        start_scheduler()
+    except Exception:
+        _log.exception("scheduler start failed")
+
+    yield  # app runs
+
+
+app = FastAPI(title="Bluegrass Baseline API", version="0.2.0", lifespan=_lifespan)
 
 _STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
@@ -119,47 +147,17 @@ def refresh_run(payload: dict) -> dict[str, object]:
 
 @app.post("/refresh/sync-latest")
 def refresh_sync_latest() -> dict[str, object]:
-    """Fetch latest results from the engine and apply any new draws.
+    """Fetch all draws from the rolling 30-day window and apply any new ones.
 
-    Skips draws already processed (idempotent). Returns processed/skipped/errors.
+    Uses the full catch-up path (not just latest per session) so gaps during
+    downtime are filled. Skips draws already processed (idempotent).
     """
-    try:
-        raw_rows = fetch_latest_results()
-    except EngineClientError as exc:
-        return {
-            "processed": [],
-            "skipped": [],
-            "errors": [{"error": str(exc)}],
-            "processed_count": 0,
-            "skipped_count": 0,
-            "error_count": 1,
-        }
-
-    processed: list[dict] = []
-    skipped: list[dict] = []
-    errors: list[dict] = []
-
-    for raw in raw_rows:
-        try:
-            result = normalize_result(raw)
-        except ValueError as exc:
-            errors.append({"raw": raw, "error": str(exc)})
-            continue
-
-        summary = refresh_from_result(result)
-        entry = {"session": result.session, "date": result.date, "result": result.result}
-        if summary.get("skipped"):
-            skipped.append(entry)
-        else:
-            processed.append(entry)
-
+    from bluegrass.research.catchup import run_catchup
+    result = run_catchup()
     return {
-        "processed": processed,
-        "skipped": skipped,
-        "errors": errors,
-        "processed_count": len(processed),
-        "skipped_count": len(skipped),
-        "error_count": len(errors),
+        "processed_count": result["applied"],
+        "skipped_count": result["skipped"],
+        "error_count": result["errors"],
     }
 
 

@@ -13,11 +13,8 @@
     <a href="/session/Midday" {% if active == "Midday" %}class="active"{% endif %}>Midday</a>
     <a href="/session/Evening" {% if active == "Evening" %}class="active"{% endif %}>Evening</a>
     <a href="/session/Night" {% if active == "Night" %}class="active"{% endif %}>Night</a>
-    <span class="nav-sep">|</span>
-    <a href="/convergence/overview" {% if active == "convergence_overview" %}class="active"{% endif %}>Convergence</a>
-    <a href="/convergence/session/Midday" {% if active == "conv_Midday" %}class="active"{% endif %}>Conv·M</a>
-    <a href="/convergence/session/Evening" {% if active == "conv_Evening" %}class="active"{% endif %}>Conv·E</a>
-    <a href="/convergence/session/Night" {% if active == "conv_Night" %}class="active"{% endif %}>Conv·N</a>
+    <a href="/plays">Play Builder</a>
+    <a href="/integrity">Integrity</a>
   </nav>
   <div class="page">
     {% block content %}{% endblock %}

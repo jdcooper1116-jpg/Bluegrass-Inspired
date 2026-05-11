@@ -1,333 +1,236 @@
-"""Convergence layer: multi-signal candidate scoring for GA Pick 3."""
+"""Multi-signal convergence scoring for Pick 3 play candidates.
+
+Builds signal pools from the runtime stats layer (sums, root_sums, pairs,
+straight_combos, box_families, patterns) and scores candidate numbers from
+the baseline priority shortlist against those pools.
+"""
 
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
-from bluegrass.app.playlist import _VALID_SESSIONS, _last_processed_draw
-from bluegrass.app.watchlist import get_watchlist
+from bluegrass.app.playlist import _VALID_SESSIONS
+from bluegrass.research.baseline import filter_priority_shortlist
+from bluegrass.research.stats_store import load_stats_state
 from bluegrass.research.sums import build_root_sums_board, build_sums_board
 
-_POOL_PULL = 50
-_POOL_TOP  = 10
+_POOL_SIZE = 10
+_TIER_1_MIN = 5.0
+_TIER_2_MIN = 3.0
+_SCORE_FLOOR = 1.0
 
-_PAIR_SUBTYPES = (
-    "front_straight", "front_box",
-    "back_straight",  "back_box",
-    "split_straight", "split_box",
-)
-
-# Additive score weights
-_W_SUM       = 2.0
-_W_SUM_BONUS = 0.5   # rank ≤ 3
-_W_ROOT      = 1.0
-_W_ROOT_BONUS= 0.25  # rank ≤ 3
-_W_PAIR      = 0.75  # per pair subtype hit
-_W_STRAIGHT  = 2.0
-_W_STR_BONUS = 0.5   # rank ≤ 5
-_W_BOX       = 1.0
-_W_BOX_BONUS = 0.5   # rank ≤ 5
-_W_PATTERN   = 0.5
-
-_T1    = 5.0
-_T2    = 3.0
-_FLOOR = 1.0
+_SCORE_WEIGHTS = {
+    "sum":      2.0,
+    "root":     2.0,
+    "pair":     1.0,   # per pair position hit (max 3)
+    "straight": 2.0,
+    "box":      1.0,
+    "pattern":  1.0,
+}
 
 
-# ---------------------------------------------------------------------------
-# Pure helpers (exported for tests)
-# ---------------------------------------------------------------------------
-
-def _box_family(number: str) -> str:
-    return "".join(sorted(number))
+def _box_family(value: str) -> str:
+    return "".join(sorted(value))
 
 
-def _digit_sum(number: str) -> int:
-    return sum(int(d) for d in number)
+def _digit_sum(value: int | str) -> int:
+    return sum(int(d) for d in str(value))
 
 
-def _digital_root(n: int) -> int:
-    if n == 0:
-        return 0
-    r = n % 9
-    return r if r != 0 else 9
-
-
-def _normalize_pair_subtype(subtype: str | None) -> str:
-    if not subtype:
-        return "other"
-    low = subtype.lower()
-    for pos in ("front", "back", "split"):
-        if pos in low:
-            for pt in ("straight", "box"):
-                if pt in low:
-                    return f"{pos}_{pt}"
-    return "other"
+def _digital_root(value: int | str) -> int:
+    if isinstance(value, int):
+        n = value
+    else:
+        n = _digit_sum(value)
+    while n >= 10:
+        n = sum(int(d) for d in str(n))
+    return n
 
 
 def _pair_value(number: str, position: str) -> str:
     if position == "front":
-        return number[:2]
+        return number[0] + number[1]
     if position == "back":
-        return number[1:]
-    if position == "split":
-        return number[0] + number[2]
-    return ""
+        return number[1] + number[2]
+    return number[0] + number[2]
 
 
-def _digit_pattern(number: str) -> str:
-    u = len(set(number))
-    if u == 3:
+def _normalize_pair_subtype(subtype: str | None) -> str:
+    if subtype is None:
+        return "other"
+    mapping = {
+        "front pair straight": "front_straight",
+        "front pair box":      "front_box",
+        "back pair straight":  "back_straight",
+        "back pair box":       "back_box",
+        "split pair straight": "split_straight",
+        "split pair box":      "split_box",
+    }
+    return mapping.get(subtype.lower().strip(), "other")
+
+
+def _classify_pattern(value: str) -> str:
+    unique = len(set(value))
+    if unique == 3:
         return "single"
-    if u == 2:
+    if unique == 2:
         return "double"
     return "triple"
 
 
-# ---------------------------------------------------------------------------
-# Signal pool builder
-# ---------------------------------------------------------------------------
+def _pairs_pools(session_state: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    pairs_state: dict[str, Any] = session_state.get("pairs", {})
+    result: dict[str, list[dict[str, Any]]] = {}
 
-def _build_signal_pools(session: str) -> dict[str, Any]:
-    # Sums
-    sums_pool = [
-        {"value": r["value"], "rank": i + 1, "draws_since": r["draws_since"]}
-        for i, r in enumerate(build_sums_board(session, limit=_POOL_PULL)[:_POOL_TOP])
+    for position in ("front", "back", "split"):
+        raw = pairs_state.get(position, {})
+        for is_double, display_key in (
+            (False, f"{position}_straight"),
+            (True,  f"{position}_box"),
+        ):
+            filtered = {
+                v: e for v, e in raw.items()
+                if len(v) == 2 and (v[0] == v[1]) == is_double
+            }
+            ranked = sorted(
+                filtered.items(),
+                key=lambda x: x[1].get("draws_since", 0),
+                reverse=True,
+            )
+            result[display_key] = [
+                {"value": v, "draws_since": e.get("draws_since", 0), "rank": i + 1}
+                for i, (v, e) in enumerate(ranked[:_POOL_SIZE])
+            ]
+
+    return result
+
+
+def _combo_pool(family_state: dict[str, Any], *, limit: int = _POOL_SIZE) -> list[dict[str, Any]]:
+    ranked = sorted(
+        family_state.items(),
+        key=lambda x: x[1].get("draws_since", 0),
+        reverse=True,
+    )
+    return [
+        {"value": v, "draws_since": e.get("draws_since", 0), "rank": i + 1}
+        for i, (v, e) in enumerate(ranked[:limit])
     ]
 
-    # Root sums
-    root_sums_pool = [
-        {"value": r["value"], "rank": i + 1, "draws_since": r["draws_since"]}
-        for i, r in enumerate(build_root_sums_board(session, limit=_POOL_PULL)[:_POOL_TOP])
-    ]
 
-    # Pairs by subtype (all six slots always present)
-    pairs_raw = get_watchlist(session=session, item_type="pair", limit=_POOL_PULL)
-    by_subtype: dict[str, list[dict[str, Any]]] = {st: [] for st in _PAIR_SUBTYPES}
-    for row in pairs_raw:
-        key = _normalize_pair_subtype(row.get("subtype"))
-        if key in by_subtype and len(by_subtype[key]) < _POOL_TOP:
-            by_subtype[key].append({
-                "value": str(row.get("value", "")),
-                "rank": len(by_subtype[key]) + 1,
-                "draws_since": row.get("draws_since", 0),
-            })
-
-    # Combos split by play type and digit pattern
-    combos_raw = get_watchlist(session=session, item_type="combination", limit=_POOL_PULL)
-    straight_combos: list[dict[str, Any]] = []
-    box_combos:      list[dict[str, Any]] = []
-    singles:         list[dict[str, Any]] = []
-    doubles:         list[dict[str, Any]] = []
-    triples:         list[dict[str, Any]] = []
-
-    for row in combos_raw:
-        val = str(row.get("value", ""))
-        if len(val) != 3 or not val.isdigit():
-            continue
-        entry = {"value": val, "draws_since": row.get("draws_since", 0)}
-        sub = str(row.get("subtype", "")).lower()
-        if "straight" in sub and len(straight_combos) < _POOL_TOP:
-            straight_combos.append({**entry, "rank": len(straight_combos) + 1})
-        elif "box" in sub and len(box_combos) < _POOL_TOP:
-            box_combos.append({**entry, "rank": len(box_combos) + 1})
-        pat = _digit_pattern(val)
-        if pat == "single":
-            singles.append({**entry, "rank": len(singles) + 1})
-        elif pat == "double":
-            doubles.append({**entry, "rank": len(doubles) + 1})
-        else:
-            triples.append({**entry, "rank": len(triples) + 1})
-
-    return {
-        "sums": sums_pool,
-        "root_sums": root_sums_pool,
-        "pairs_by_subtype": by_subtype,
-        "straight_combos": straight_combos,
-        "box_combos": box_combos,
-        "singles": singles,
-        "doubles": doubles,
-        "triples": triples,
-    }
+def _pattern_pool(patterns_state: dict[str, Any], pt: str) -> list[dict[str, Any]]:
+    entry = patterns_state.get(pt)
+    if not entry:
+        return []
+    return [{"value": entry.get("last_value", ""), "draws_since": entry.get("draws_since", 0)}]
 
 
-def _build_lookups(pools: dict[str, Any]) -> dict[str, Any]:
-    sum_rank:  dict[str, int] = {e["value"]: e["rank"] for e in pools["sums"]}
-    root_rank: dict[str, int] = {e["value"]: e["rank"] for e in pools["root_sums"]}
-    pair_rank: dict[str, dict[str, int]] = {
-        st: {e["value"]: e["rank"] for e in entries}
-        for st, entries in pools["pairs_by_subtype"].items()
-    }
-    straight_rank: dict[str, int] = {e["value"]: e["rank"] for e in pools["straight_combos"]}
-    box_family_rank: dict[str, int] = {}
-    for e in pools["box_combos"]:
-        fam = _box_family(e["value"])
-        if fam not in box_family_rank:
-            box_family_rank[fam] = e["rank"]
-    pattern_pool: set[str] = set()
-    for lst in (pools["straight_combos"], pools["box_combos"],
-                pools["singles"], pools["doubles"], pools["triples"]):
-        pattern_pool.update(e["value"] for e in lst)
-    return {
-        "sum_rank": sum_rank,
-        "root_rank": root_rank,
-        "pair_rank": pair_rank,
-        "straight_rank": straight_rank,
-        "box_family_rank": box_family_rank,
-        "pattern_pool": pattern_pool,
-    }
+def _score_candidate(
+    number: str,
+    sums_pool: list[dict[str, Any]],
+    roots_pool: list[dict[str, Any]],
+    pairs_by_sub: dict[str, list[dict[str, Any]]],
+    straight_pool: list[dict[str, Any]],
+    box_pool: list[dict[str, Any]],
+    all_pattern_pool: list[dict[str, Any]],
+) -> dict[str, Any]:
+    ds  = _digit_sum(number)
+    rs  = _digital_root(number)
+    bx  = _box_family(number)
+    pat = _classify_pattern(number)
 
+    sum_str  = str(ds)
+    root_str = str(rs)
 
-# ---------------------------------------------------------------------------
-# Supplementary candidate generation (sum × pair, pair × pair)
-# ---------------------------------------------------------------------------
+    sum_map      = {e["value"]: e["rank"] for e in sums_pool}
+    root_map     = {e["value"]: e["rank"] for e in roots_pool}
+    straight_map = {e["value"]: e["rank"] for e in straight_pool}
+    box_map      = {e["value"]: e["rank"] for e in box_pool}
+    pattern_vals = {e["value"] for e in all_pattern_pool}
 
-def _supplementary_candidates(pools: dict[str, Any], exclude: set[str]) -> set[str]:
-    out: set[str] = set()
+    sum_match      = sum_str in sum_map
+    root_match     = root_str in root_map
+    straight_match = number in straight_map
+    box_match      = bx in box_map
+    pattern_match  = bx in pattern_vals or number in pattern_vals
 
-    sums       = [e["value"] for e in pools["sums"]]
-    front_vals = ([e["value"] for e in pools["pairs_by_subtype"]["front_straight"]]
-                + [e["value"] for e in pools["pairs_by_subtype"]["front_box"]])
-    back_vals  = ([e["value"] for e in pools["pairs_by_subtype"]["back_straight"]]
-                + [e["value"] for e in pools["pairs_by_subtype"]["back_box"]])
-    split_vals = ([e["value"] for e in pools["pairs_by_subtype"]["split_straight"]]
-                + [e["value"] for e in pools["pairs_by_subtype"]["split_box"]])
+    front_vals = (
+        {e["value"] for e in pairs_by_sub.get("front_straight", [])} |
+        {e["value"] for e in pairs_by_sub.get("front_box", [])}
+    )
+    back_vals = (
+        {e["value"] for e in pairs_by_sub.get("back_straight", [])} |
+        {e["value"] for e in pairs_by_sub.get("back_box", [])}
+    )
+    split_vals = (
+        {e["value"] for e in pairs_by_sub.get("split_straight", [])} |
+        {e["value"] for e in pairs_by_sub.get("split_box", [])}
+    )
 
-    for sv in sums:
-        try:
-            s = int(sv)
-        except ValueError:
-            continue
-        for fp in front_vals:   # ABx → x = s - A - B
-            if len(fp) == 2:
-                r = s - int(fp[0]) - int(fp[1])
-                if 0 <= r <= 9:
-                    out.add(fp + str(r))
-        for bp in back_vals:    # xAB → x = s - A - B
-            if len(bp) == 2:
-                r = s - int(bp[0]) - int(bp[1])
-                if 0 <= r <= 9:
-                    out.add(str(r) + bp)
-        for sp in split_vals:   # AxB → x = s - A - B
-            if len(sp) == 2:
-                r = s - int(sp[0]) - int(sp[1])
-                if 0 <= r <= 9:
-                    out.add(sp[0] + str(r) + sp[1])
-
-    # front × back: fp[1] == bp[0] → fp[0] fp[1] bp[1]
-    for fp in front_vals:
-        for bp in back_vals:
-            if len(fp) == 2 and len(bp) == 2 and fp[1] == bp[0]:
-                out.add(fp[0] + fp[1] + bp[1])
-
-    # front × split: fp[0] == sp[0] → fp[0] fp[1] sp[1]
-    for fp in front_vals:
-        for sp in split_vals:
-            if len(fp) == 2 and len(sp) == 2 and fp[0] == sp[0]:
-                out.add(fp[0] + fp[1] + sp[1])
-
-    # back × split: bp[1] == sp[1] → sp[0] bp[0] bp[1]
-    for bp in back_vals:
-        for sp in split_vals:
-            if len(bp) == 2 and len(sp) == 2 and bp[1] == sp[1]:
-                out.add(sp[0] + bp[0] + bp[1])
-
-    return out - exclude
-
-
-# ---------------------------------------------------------------------------
-# Candidate scorer
-# ---------------------------------------------------------------------------
-
-def _score_candidate(number: str, lookups: dict[str, Any], in_combo_pool: bool) -> dict[str, Any]:
-    ds    = _digit_sum(number)
-    rs    = _digital_root(ds)
-    ds_s  = str(ds)
-    rs_s  = str(rs)
-    bf    = _box_family(number)
-    pat   = _digit_pattern(number)
-    score = 0.0
-    sig: dict[str, Any] = {}
-
-    # Sum
-    sr = lookups["sum_rank"].get(ds_s)
-    sm = sr is not None
-    if sm:
-        score += _W_SUM + (_W_SUM_BONUS if sr <= 3 else 0)
-    sig["sum_match"] = sm; sig["sum_value"] = ds_s; sig["sum_rank"] = sr
-
-    # Root sum
-    rr = lookups["root_rank"].get(rs_s)
-    rm = rr is not None
-    if rm:
-        score += _W_ROOT + (_W_ROOT_BONUS if rr <= 3 else 0)
-    sig["root_sum_match"] = rm; sig["root_sum_value"] = rs_s; sig["root_sum_rank"] = rr
-
-    # Pair hits — all six subtypes
     pair_hits: list[str] = []
-    for pos in ("front", "back", "split"):
-        pv = _pair_value(number, pos)
-        for pt in ("straight", "box"):
-            st = f"{pos}_{pt}"
-            r  = lookups["pair_rank"].get(st, {}).get(pv)
-            if r is not None:
-                pair_hits.append(st)
-                score += _W_PAIR
-    sig["pair_hits"] = pair_hits; sig["pair_hit_count"] = len(pair_hits)
+    if _pair_value(number, "front") in front_vals:
+        pair_hits.append("front_pair")
+    if _pair_value(number, "back") in back_vals:
+        pair_hits.append("back_pair")
+    if _pair_value(number, "split") in split_vals:
+        pair_hits.append("split_pair")
 
-    # Straight match
-    str_r = lookups["straight_rank"].get(number)
-    str_m = str_r is not None
-    if str_m:
-        score += _W_STRAIGHT + (_W_STR_BONUS if str_r <= 5 else 0)
-    sig["straight_match"] = str_m; sig["straight_rank"] = str_r
+    score = 0.0
+    if sum_match:
+        score += _SCORE_WEIGHTS["sum"]
+    if root_match:
+        score += _SCORE_WEIGHTS["root"]
+    score += len(pair_hits) * _SCORE_WEIGHTS["pair"]
+    if straight_match:
+        score += _SCORE_WEIGHTS["straight"]
+    if box_match:
+        score += _SCORE_WEIGHTS["box"]
+    if pattern_match:
+        score += _SCORE_WEIGHTS["pattern"]
 
-    # Box-family match (not exact value — sorted digits)
-    bfr = lookups["box_family_rank"].get(bf)
-    bfm = bfr is not None
-    if bfm:
-        score += _W_BOX + (_W_BOX_BONUS if bfr <= 5 else 0)
-    sig["box_family_match"] = bfm; sig["box_family"] = bf; sig["box_family_rank"] = bfr
+    signals: dict[str, Any] = {
+        "sum_match":          sum_match,
+        "sum_value":          sum_str if sum_match else None,
+        "sum_rank":           sum_map.get(sum_str) if sum_match else None,
+        "root_sum_match":     root_match,
+        "root_sum_value":     root_str if root_match else None,
+        "root_sum_rank":      root_map.get(root_str) if root_match else None,
+        "pair_hits":          pair_hits,
+        "pair_hit_count":     len(pair_hits),
+        "straight_match":     straight_match,
+        "straight_rank":      straight_map.get(number) if straight_match else None,
+        "box_family_match":   box_match,
+        "box_family":         bx,
+        "box_family_rank":    box_map.get(bx) if box_match else None,
+        "pattern_pool_match": pattern_match,
+    }
 
-    # Pattern pool
-    ppm = number in lookups["pattern_pool"]
-    if ppm:
-        score += _W_PATTERN
-    sig["pattern_pool_match"] = ppm
-
-    score = round(score, 4)
-    tier  = 1 if score >= _T1 else (2 if score >= _T2 else 3)
-
-    # Evidence row / rationale
     parts: list[str] = []
-    if sm:
-        parts.append(f"sum={ds_s}(#{sr})")
-    if rm:
-        parts.append(f"root={rs_s}(#{rr})")
-    if pair_hits:
-        parts.append(f"pairs:[{','.join(pair_hits)}]")
-    if str_m:
-        parts.append(f"straight(#{str_r})")
-    if bfm:
-        parts.append(f"box={bf}(#{bfr})")
-    if ppm:
-        parts.append("pattern-pool")
-    rationale = " | ".join(parts) if parts else "no signals"
+    if sum_match:
+        parts.append(f"sum {sum_str} due (rank {sum_map[sum_str]})")
+    if root_match:
+        parts.append(f"root {root_str} due (rank {root_map[root_str]})")
+    for ph in pair_hits:
+        parts.append(f"{ph} hit")
+    if straight_match:
+        parts.append(f"straight {number} due (rank {straight_map[number]})")
+    if box_match:
+        parts.append(f"box {bx} due (rank {box_map[bx]})")
+    if pattern_match:
+        parts.append(f"pattern ({pat}) due")
+    rationale = "; ".join(parts) if parts else "no active signals"
 
     return {
-        "number":           number,
-        "digit_sum":        ds,
-        "root_sum":         rs,
-        "digit_pattern":    pat,
-        "convergence_score": score,
-        "tier":             tier,
-        "rationale":        rationale,
-        "signals":          sig,
-        "in_combo_pool":    in_combo_pool,
-        "multi_session":    False,
-        # future-ready pillar fields
+        "number":                     number,
+        "digit_sum":                  ds,
+        "root_sum":                   rs,
+        "digit_pattern":              pat,
+        "convergence_score":          round(score, 2),
+        "signals":                    signals,
+        "in_combo_pool":              box_match or straight_match,
+        "rationale":                  rationale,
+        "multi_session":              False,
         "sweet404_match":             None,
         "planetary_match":            None,
         "external_convergence_match": None,
@@ -335,133 +238,137 @@ def _score_candidate(number: str, lookups: dict[str, Any], in_combo_pool: bool) 
     }
 
 
-# ---------------------------------------------------------------------------
-# Public builders
-# ---------------------------------------------------------------------------
+def _tier(score: float) -> int:
+    if score >= _TIER_1_MIN:
+        return 1
+    if score >= _TIER_2_MIN:
+        return 2
+    return 3
+
 
 def build_session_convergence(session: str) -> dict[str, Any]:
-    """Full convergence payload for one session."""
     if session not in _VALID_SESSIONS:
         raise ValueError(f"unrecognized session: {session!r}")
 
-    pools   = _build_signal_pools(session)
-    lookups = _build_lookups(pools)
+    state = load_stats_state().get("by_session", {}).get(session, {})
 
-    # Primary: combo watchlist
-    combos_raw   = get_watchlist(session=session, item_type="combination", limit=_POOL_PULL)
-    combo_values = {str(r.get("value", "")) for r in combos_raw
-                    if len(str(r.get("value", ""))) == 3 and str(r.get("value", "")).isdigit()}
+    sums_board = build_sums_board(session, limit=_POOL_SIZE)
+    root_board = build_root_sums_board(session, limit=_POOL_SIZE)
+    sums_pool = [
+        {"value": r["value"], "draws_since": r["draws_since"], "rank": i + 1}
+        for i, r in enumerate(sums_board)
+    ]
+    roots_pool = [
+        {"value": r["value"], "draws_since": r["draws_since"], "rank": i + 1}
+        for i, r in enumerate(root_board)
+    ]
+
+    pairs_by_sub  = _pairs_pools(state)
+    straight_pool = _combo_pool(state.get("straight_combos", {}))
+    box_pool      = _combo_pool(state.get("box_families", {}))
+    patterns      = state.get("patterns", {})
+    singles_pool  = _pattern_pool(patterns, "single")
+    doubles_pool  = _pattern_pool(patterns, "double")
+    triples_pool  = _pattern_pool(patterns, "triple")
+    all_pat_pool  = singles_pool + doubles_pool + triples_pool
+
+    signal_pools: dict[str, Any] = {
+        "sums":             sums_pool,
+        "root_sums":        roots_pool,
+        "pairs_by_subtype": pairs_by_sub,
+        "straight_combos":  straight_pool,
+        "box_combos":       box_pool,
+        "singles":          singles_pool,
+        "doubles":          doubles_pool,
+        "triples":          triples_pool,
+    }
+
+    shortlist_rows = filter_priority_shortlist(session=session, item_type="combination", limit=50)
+    raw_candidates: list[dict[str, Any]] = []
+    for row in shortlist_rows:
+        num = row.get("combo_value") or row.get("value") or ""
+        if not num:
+            continue
+        raw_candidates.append(
+            _score_candidate(
+                num, sums_pool, roots_pool, pairs_by_sub,
+                straight_pool, box_pool, all_pat_pool,
+            )
+        )
+
+    seen: dict[str, dict[str, Any]] = {}
+    for c in raw_candidates:
+        num = c["number"]
+        if num not in seen or c["convergence_score"] > seen[num]["convergence_score"]:
+            seen[num] = c
 
     candidates: list[dict[str, Any]] = []
-    for num in combo_values:
-        c = _score_candidate(num, lookups, in_combo_pool=True)
-        if c["convergence_score"] >= _FLOOR:
-            candidates.append(c)
+    for c in sorted(seen.values(), key=lambda x: x["convergence_score"], reverse=True):
+        if c["convergence_score"] < _SCORE_FLOOR:
+            continue
+        candidates.append({**c, "tier": _tier(c["convergence_score"])})
 
-    # Supplementary: signal intersections
-    for num in _supplementary_candidates(pools, combo_values):
-        c = _score_candidate(num, lookups, in_combo_pool=False)
-        if c["convergence_score"] >= _FLOOR:
-            candidates.append(c)
+    tier_counts = {1: 0, 2: 0, 3: 0}
+    for c in candidates:
+        tier_counts[c["tier"]] += 1
 
-    candidates.sort(key=lambda c: (-c["convergence_score"], c["number"]))
-    counts = Counter(c["tier"] for c in candidates)
+    last_id   = state.get("processed_draw_ids", [])
+    last_draw = last_id[-1].split(":")[0] if last_id else "—"
 
     return {
         "session":          session,
         "candidates":       candidates,
-        "signal_pools":     pools,
-        "tier_1_count":     counts.get(1, 0),
-        "tier_2_count":     counts.get(2, 0),
-        "tier_3_count":     counts.get(3, 0),
+        "signal_pools":     signal_pools,
+        "tier_1_count":     tier_counts[1],
+        "tier_2_count":     tier_counts[2],
+        "tier_3_count":     tier_counts[3],
         "total_candidates": len(candidates),
         "metadata": {
-            "session":             session,
-            "source":              "baseline+runtime",
-            "last_processed_draw": _last_processed_draw(session),
-            "generated_at":        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "last_processed_draw": last_draw,
+            "generated_at":        datetime.utcnow().isoformat(),
         },
     }
 
 
 def build_convergence_overview() -> dict[str, Any]:
-    """Cross-session convergence overview.
+    session_summaries: dict[str, Any] = {}
+    all_session_top: dict[str, list[str]] = {}
 
-    Bucket A: numbers appearing in 2+ sessions (multi_session_candidates).
-    Bucket B: single-session numbers whose sum, root, or box family also
-              appears in another session's signal pools (overview_supported_candidates).
-    No number is in both buckets.
-    """
-    sessions = list(_VALID_SESSIONS)
-    by_session: dict[str, dict[str, Any]] = {s: build_session_convergence(s) for s in sessions}
+    for sess in sorted(_VALID_SESSIONS):
+        conv = build_session_convergence(sess)
+        all_session_top[sess] = [
+            c["number"] for c in conv["candidates"] if c["tier"] <= 2
+        ]
+        session_summaries[sess] = {
+            "tier_1_count":     conv["tier_1_count"],
+            "tier_2_count":     conv["tier_2_count"],
+            "tier_3_count":     conv["tier_3_count"],
+            "total_candidates": conv["total_candidates"],
+        }
 
-    # Collect per-number appearances and best score
+    counter: Counter = Counter()
     num_sessions: dict[str, list[str]] = {}
-    num_best:     dict[str, dict[str, Any]] = {}
-    for sess, res in by_session.items():
-        for c in res["candidates"]:
-            n = c["number"]
+    for sess, nums in all_session_top.items():
+        for n in nums:
+            counter[n] += 1
             num_sessions.setdefault(n, []).append(sess)
-            if n not in num_best or c["convergence_score"] > num_best[n]["convergence_score"]:
-                num_best[n] = {**c}
 
-    # Cross-session pool sets (for Bucket B support check)
-    other_sums:  dict[str, set[str]] = {s: set() for s in sessions}
-    other_roots: dict[str, set[str]] = {s: set() for s in sessions}
-    other_boxes: dict[str, set[str]] = {s: set() for s in sessions}
-    for sess, res in by_session.items():
-        p = res["signal_pools"]
-        for other in sessions:
-            if other == sess:
-                continue
-            other_sums[other].update(e["value"] for e in p["sums"])
-            other_roots[other].update(e["value"] for e in p["root_sums"])
-            other_boxes[other].update(
-                _box_family(e["value"])
-                for e in p["straight_combos"] + p["box_combos"]
-            )
+    multi = [
+        {"number": n, "sessions": num_sessions[n]}
+        for n, cnt in counter.most_common()
+        if cnt >= 2
+    ]
+    multi_nums = {m["number"] for m in multi}
 
-    bucket_a: list[dict[str, Any]] = []
-    bucket_b: list[dict[str, Any]] = []
-    a_nums:   set[str] = set()
-
-    for num, sess_list in num_sessions.items():
-        if len(sess_list) >= 2:
-            entry = {**num_best[num], "sessions_present": sorted(set(sess_list)), "multi_session": True}
-            bucket_a.append(entry)
-            a_nums.add(num)
-
-    for num, sess_list in num_sessions.items():
-        if num in a_nums:
-            continue
-        src = sess_list[0]
-        best = num_best[num]
-        supported = (
-            str(best["digit_sum"]) in other_sums.get(src, set())
-            or str(best["root_sum"]) in other_roots.get(src, set())
-            or _box_family(num) in other_boxes.get(src, set())
-        )
-        if supported:
-            bucket_b.append({**best, "sessions_present": sess_list})
-
-    bucket_a.sort(key=lambda c: (-c["convergence_score"], c["number"]))
-    bucket_b.sort(key=lambda c: (-c["convergence_score"], c["number"]))
+    overview_supported = [
+        {"number": n}
+        for n, cnt in counter.most_common()
+        if cnt == 1 and n not in multi_nums
+    ][:20]
 
     return {
-        "multi_session_candidates":      bucket_a,
-        "overview_supported_candidates": bucket_b,
-        "session_summaries": {
-            sess: {
-                "tier_1_count":        res["tier_1_count"],
-                "tier_2_count":        res["tier_2_count"],
-                "tier_3_count":        res["tier_3_count"],
-                "total_candidates":    res["total_candidates"],
-                "last_processed_draw": res["metadata"]["last_processed_draw"],
-            }
-            for sess, res in by_session.items()
-        },
-        "metadata": {
-            "source":       "baseline+runtime",
-            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        },
+        "multi_session_candidates":      multi,
+        "overview_supported_candidates": overview_supported,
+        "session_summaries":             session_summaries,
+        "metadata": {"generated_at": datetime.utcnow().isoformat()},
     }

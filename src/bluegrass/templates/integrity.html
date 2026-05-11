@@ -1,0 +1,142 @@
+{% extends "base_pb.html" %}
+
+{% block title %}Integrity · Bluegrass{% endblock %}
+
+{% block topnav_right %}
+<form method="post" action="/refresh" style="display:inline">
+  <input type="hidden" name="next" value="/integrity">
+  <button type="submit" class="btn-pb-refresh">↻ Sync Latest</button>
+</form>
+{% endblock %}
+
+{% block sidebar_freshness %}
+<div class="sb-freshness-row">
+  <span>Overall</span>
+  <span class="freshness-badge freshness-{{ vm.overall_status }}">
+    {{ vm.overall_status }}
+  </span>
+</div>
+<div class="sb-freshness-row">
+  <span>Total draws</span>
+  <span>{{ vm.total_draws_processed }}</span>
+</div>
+{% endblock %}
+
+{% block rail %}
+<div class="rail-section">
+  <div class="rail-section-label">Session Status</div>
+  {% for sess, s in vm.sessions.items() %}
+  <div class="rail-item" style="flex-direction:column;align-items:flex-start;gap:2px;margin-bottom:8px">
+    <span style="font-weight:600;color:var(--fg)">{{ sess }}</span>
+    <span class="freshness-badge freshness-{{ s.match_status }}">{{ s.match_status }}</span>
+    <span style="font-size:10px;color:var(--muted)">{{ s.draws_processed }} draws</span>
+    {% if s.draws_behind %}
+    <span style="font-size:10px;color:var(--amber)">{{ s.draws_behind }}d behind</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="pb-page-header">
+  <h1 class="pb-page-title">Statistical Integrity</h1>
+  <span class="pb-page-sub">Generated {{ vm.generated_at[:19] | replace("T", " ") }}</span>
+</div>
+
+{% if sync_result %}
+<div class="pb-sync-banner">
+  <span class="sync-label">Synced</span>
+  <span class="sync-detail">
+    {{ sync_result.processed }} processed · {{ sync_result.skipped }} skipped
+    {% if sync_result.errors %} · {{ sync_result.errors }} errors{% endif %}
+  </span>
+</div>
+{% endif %}
+
+<div class="pb-section-title">
+  Per-Session Engine vs Bluegrass Comparison
+  <span class="count-badge">{{ vm.total_draws_processed }} total draws processed</span>
+</div>
+
+{% for sess, s in vm.sessions.items() %}
+<div class="tier-section" style="margin-bottom:18px">
+  <div class="tier-label {% if s.match_status == 'matched' %}tier-label-1{% elif s.match_status == 'stale' %}tier-label-2{% else %}tier-label-3{% endif %}"
+       style="display:flex;align-items:center;gap:8px">
+    {{ sess }}
+    <span class="freshness-badge freshness-{{ s.match_status }}">{{ s.match_status }}</span>
+    {% if s.gap_detected %}
+    <span class="trust-warn" style="font-size:11px">⚠ gap detected</span>
+    {% endif %}
+    {% if s.rebuild_needed %}
+    <span style="font-size:10px;color:var(--muted);font-weight:400">rebuild recommended</span>
+    {% endif %}
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px">
+
+    <div class="play-list-card" style="padding:10px">
+      <div class="play-list-title">Engine</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Latest draw date</div>
+      <div style="font-size:13px;color:var(--fg);font-family:monospace">
+        {{ s.engine_latest_date or "—" }}
+      </div>
+    </div>
+
+    <div class="play-list-card" style="padding:10px">
+      <div class="play-list-title">Bluegrass Applied</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Latest applied draw</div>
+      <div style="font-size:13px;color:var(--fg);font-family:monospace">
+        {{ s.bluegrass_latest_date or "—" }}
+        {% if s.bluegrass_latest_result %}· <strong>{{ s.bluegrass_latest_result }}</strong>{% endif %}
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">
+        {{ s.draws_processed }} draws processed
+      </div>
+    </div>
+
+    <div class="play-list-card" style="padding:10px">
+      <div class="play-list-title">Last Resets</div>
+      {% set r = s.last_resets %}
+      {% if r.sum %}
+      <div style="font-size:11px;margin-top:4px"><span style="color:var(--muted)">Sum</span> <code>{{ r.sum.value }}</code> → 0</div>
+      {% endif %}
+      {% if r.root_sum %}
+      <div style="font-size:11px"><span style="color:var(--muted)">Root</span> <code>{{ r.root_sum.value }}</code> → 0</div>
+      {% endif %}
+      {% if r.front_pair %}
+      <div style="font-size:11px"><span style="color:var(--muted)">Front</span> <code>{{ r.front_pair.value }}</code> → 0</div>
+      {% endif %}
+      {% if r.back_pair %}
+      <div style="font-size:11px"><span style="color:var(--muted)">Back</span> <code>{{ r.back_pair.value }}</code> → 0</div>
+      {% endif %}
+      {% if r.split_pair %}
+      <div style="font-size:11px"><span style="color:var(--muted)">Split</span> <code>{{ r.split_pair.value }}</code> → 0</div>
+      {% endif %}
+      {% if r.straight %}
+      <div style="font-size:11px"><span style="color:var(--muted)">Straight</span> <code>{{ r.straight.value }}</code> → 0</div>
+      {% endif %}
+      {% if r.box_family %}
+      <div style="font-size:11px"><span style="color:var(--muted)">Box</span> <code>{{ r.box_family.value }}</code> → 0</div>
+      {% endif %}
+      {% if not r.sum and not r.root_sum and not r.front_pair %}
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">No resets in latest draw</div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endfor %}
+
+<hr class="pb-section-divider">
+
+<div class="pb-section-title">Integrity Legend</div>
+<div style="font-size:12px;color:var(--muted);line-height:1.8">
+  <div><span class="freshness-badge freshness-matched">matched</span> — Bluegrass latest draw date equals engine latest date.</div>
+  <div style="margin-top:4px"><span class="freshness-badge freshness-stale">stale</span> — Bluegrass is behind the engine. Run Sync Latest to catch up.</div>
+  <div style="margin-top:4px"><span class="freshness-badge freshness-unknown">unknown</span> — Engine is unreachable or returned no data for this session.</div>
+  <div style="margin-top:8px">Last Resets show the most recently zeroed value per family — confirming the latest draw was applied correctly.</div>
+</div>
+
+{% endblock %}

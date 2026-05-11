@@ -20,6 +20,7 @@ from bluegrass.app.audit import build_audit_overview, build_session_audit
 from bluegrass.app.board import build_session_board
 from bluegrass.app.classify import classify_digit_pattern, classify_pair, classify_play_type
 from bluegrass.app.convergence import build_convergence_overview, build_session_convergence
+from bluegrass.app.integrity import build_integrity_view
 from bluegrass.app.overview import build_all_draws_overview
 from bluegrass.app.play_builder import build_play_builder_overview, build_play_builder_session
 from bluegrass.app.playlist import _VALID_SESSIONS
@@ -27,18 +28,15 @@ from bluegrass.engine.client import EngineClientError, fetch_latest_results
 from bluegrass.engine.intake import normalize_result
 from bluegrass.research.refresh import refresh_from_result
 
+_SESSION_NORMALIZE: dict[str, str] = {s.lower(): s for s in _VALID_SESSIONS}
+
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
 router = APIRouter()
 
 
-# ---------------------------------------------------------------------------
-# Card enrichment helpers
-# ---------------------------------------------------------------------------
-
 def _enrich_pair_card(card: dict[str, Any]) -> dict[str, Any]:
-    """Add pair_position and play_type_label chips. No digit_pattern for 2-digit values."""
     c = dict(card)
     pair_cls = classify_pair(card.get("subtype"))
     c["pair_position"] = pair_cls["position"]
@@ -47,7 +45,6 @@ def _enrich_pair_card(card: dict[str, Any]) -> dict[str, Any]:
 
 
 def _enrich_combo_card(card: dict[str, Any]) -> dict[str, Any]:
-    """Add digit_pattern (single/double/triple) and play_type_label chips."""
     c = dict(card)
     c["digit_pattern"] = classify_digit_pattern(str(card.get("value", "")))
     c["play_type_label"] = classify_play_type(card.get("subtype"))
@@ -55,7 +52,6 @@ def _enrich_combo_card(card: dict[str, Any]) -> dict[str, Any]:
 
 
 def _enrich_shortlist_entry(entry: dict[str, Any]) -> dict[str, Any]:
-    """Enrich by family: combos get digit_pattern; pairs get position chips."""
     c = dict(entry)
     family = entry.get("family", "")
     if family == "combination":
@@ -71,7 +67,6 @@ def _enrich_shortlist_entry(entry: dict[str, Any]) -> dict[str, Any]:
 def _group_pairs_by_position(
     pairs: list[dict[str, Any]],
 ) -> list[tuple[str, list[dict[str, Any]]]]:
-    """Group enriched pair cards by position, returning ordered (label, cards) pairs."""
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for card in pairs:
         groups[card.get("pair_position", "unknown")].append(card)
@@ -79,12 +74,7 @@ def _group_pairs_by_position(
     return [(pos, groups[pos]) for pos in order if pos in groups]
 
 
-# ---------------------------------------------------------------------------
-# Sync helper (shared by POST /refresh)
-# ---------------------------------------------------------------------------
-
 def _run_sync() -> dict[str, int]:
-    """Run sync-latest and return {processed, skipped, errors} counts."""
     processed = skipped = errors = 0
     try:
         raw_rows = fetch_latest_results()
@@ -103,10 +93,6 @@ def _run_sync() -> dict[str, int]:
             processed += 1
     return {"processed": processed, "skipped": skipped, "errors": errors}
 
-
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
 
 @router.get("/", response_class=HTMLResponse, include_in_schema=False)
 def ui_overview(
@@ -138,6 +124,9 @@ def ui_session(
     skipped: int = 0,
     errors: int = 0,
 ) -> Response:
+    normalized = _SESSION_NORMALIZE.get(session.lower())
+    if normalized and normalized != session:
+        return RedirectResponse(url=f"/session/{normalized}", status_code=301)
     if session not in _VALID_SESSIONS:
         return templates.TemplateResponse(
             request, "404.html",
@@ -147,13 +136,11 @@ def ui_session(
         )
     board = build_session_board(session)
     audit = build_session_audit(session)
-
-    enriched_pairs = [_enrich_pair_card(c) for c in board.get("top_pairs", [])]
-    enriched_combos = [_enrich_combo_card(c) for c in board.get("top_combinations", [])]
+    enriched_pairs    = [_enrich_pair_card(c) for c in board.get("top_pairs", [])]
+    enriched_combos   = [_enrich_combo_card(c) for c in board.get("top_combinations", [])]
     pairs_by_position = _group_pairs_by_position(enriched_pairs)
     enriched_shortlist = [_enrich_shortlist_entry(e) for e in board.get("shortlist", [])]
     sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
-
     return templates.TemplateResponse(request, "session.html", {
         "board": board,
         "audit": audit,
@@ -165,37 +152,6 @@ def ui_session(
         "session": session,
         "active": session,
     })
-
-
-@router.get("/convergence/overview", response_class=HTMLResponse, include_in_schema=False)
-def ui_convergence_overview(request: Request) -> Response:
-    conv  = build_convergence_overview()
-    audit = build_audit_overview()
-    return templates.TemplateResponse(request, "convergence_overview.html", {
-        "conv":   conv,
-        "audit":  audit,
-        "active": "convergence_overview",
-    })
-
-
-@router.get("/convergence/session/{session}", response_class=HTMLResponse, include_in_schema=False)
-def ui_convergence_session(session: str, request: Request) -> Response:
-    if session not in _VALID_SESSIONS:
-        return templates.TemplateResponse(
-            request, "404.html",
-            {"active": None,
-             "detail": f"Session {session!r} not found. Valid: Midday, Evening, Night."},
-            status_code=404,
-        )
-    conv  = build_session_convergence(session)
-    audit = build_session_audit(session)
-    return templates.TemplateResponse(request, "convergence_session.html", {
-        "conv":    conv,
-        "audit":   audit,
-        "session": session,
-        "active":  f"conv_{session}",
-    })
-
 
 
 @router.get("/plays", response_class=HTMLResponse, include_in_schema=False)
@@ -226,6 +182,9 @@ def pb_session(
     skipped: int = 0,
     errors: int = 0,
 ) -> Response:
+    normalized = _SESSION_NORMALIZE.get(session.lower())
+    if normalized and normalized != session:
+        return RedirectResponse(url=f"/plays/session/{normalized}", status_code=301)
     if session not in _VALID_SESSIONS:
         return templates.TemplateResponse(
             request, "404.html",
@@ -242,14 +201,76 @@ def pb_session(
     })
 
 
+@router.get("/convergence/overview", response_class=HTMLResponse, include_in_schema=False)
+def convergence_overview(
+    request: Request,
+    synced: int = 0,
+    processed: int = 0,
+    skipped: int = 0,
+    errors: int = 0,
+) -> Response:
+    vm = build_convergence_overview()
+    sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
+    return templates.TemplateResponse(request, "convergence_overview.html", {
+        "vm": vm,
+        "sync_result": sync_result,
+        "active": "convergence",
+    })
+
+
+@router.get("/convergence/session/{session}", response_class=HTMLResponse, include_in_schema=False)
+def convergence_session(
+    session: str,
+    request: Request,
+    synced: int = 0,
+    processed: int = 0,
+    skipped: int = 0,
+    errors: int = 0,
+) -> Response:
+    normalized = _SESSION_NORMALIZE.get(session.lower())
+    if normalized and normalized != session:
+        return RedirectResponse(url=f"/convergence/session/{normalized}", status_code=301)
+    if session not in _VALID_SESSIONS:
+        return templates.TemplateResponse(
+            request, "404.html",
+            {"active": None,
+             "detail": f"Session {session!r} not found. Valid: Midday, Evening, Night."},
+            status_code=404,
+        )
+    vm = build_session_convergence(session)
+    sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
+    return templates.TemplateResponse(request, "convergence_session.html", {
+        "vm": vm,
+        "sync_result": sync_result,
+        "session": session,
+        "active": session,
+    })
+
+
+@router.get("/integrity", response_class=HTMLResponse, include_in_schema=False)
+def ui_integrity(
+    request: Request,
+    synced: int = 0,
+    processed: int = 0,
+    skipped: int = 0,
+    errors: int = 0,
+) -> Response:
+    vm = build_integrity_view()
+    sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
+    return templates.TemplateResponse(request, "integrity.html", {
+        "vm": vm,
+        "sync_result": sync_result,
+        "active": "integrity",
+    })
+
+
 @router.post("/refresh", include_in_schema=False)
 def ui_refresh(next: str = Query(default="/")) -> Response:
-    """Trigger sync-latest and redirect back to the originating page."""
-    # Guard against open redirects
     if not next.startswith("/"):
         next = "/"
-    counts = _run_sync()
-    p, s, e = counts["processed"], counts["skipped"], counts["errors"]
+    from bluegrass.research.catchup import run_catchup
+    counts = run_catchup()
+    p, s, e = counts["applied"], counts["skipped"], counts["errors"]
     return RedirectResponse(
         url=f"{next}?synced=1&processed={p}&skipped={s}&errors={e}",
         status_code=303,
