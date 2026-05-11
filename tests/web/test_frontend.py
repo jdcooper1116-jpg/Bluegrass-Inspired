@@ -118,3 +118,42 @@ def test_invalid_session_404_is_html() -> None:
 def test_invalid_session_404_has_message() -> None:
     body = client.get("/session/Weekend").text
     assert "404" in body or "not found" in body.lower() or "invalid" in body.lower()
+
+
+# ---------------------------------------------------------------------------
+# Homepage CTA strip
+# ---------------------------------------------------------------------------
+
+def test_homepage_has_play_builder_cta() -> None:
+    body = client.get("/").text
+    assert "Play Builder" in body
+
+
+def test_homepage_has_integrity_cta() -> None:
+    body = client.get("/").text
+    assert "Integrity" in body
+
+
+def test_homepage_links_to_plays() -> None:
+    body = client.get("/").text
+    assert "/plays" in body
+
+
+def test_homepage_links_to_integrity() -> None:
+    body = client.get("/").text
+    assert "/integrity" in body
+
+
+def test_homepage_has_session_quick_link_midday() -> None:
+    body = client.get("/").text
+    assert "/plays/session/Midday" in body
+
+
+def test_homepage_has_session_quick_link_evening() -> None:
+    body = client.get("/").text
+    assert "/plays/session/Evening" in body
+
+
+def test_homepage_has_session_quick_link_night() -> None:
+    body = client.get("/").text
+    assert "/plays/session/Night" in body
