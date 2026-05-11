@@ -6,7 +6,7 @@ most recent applied stat resets so operators can verify correctness.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from bluegrass.app.audit import build_audit_overview
@@ -107,5 +107,5 @@ def build_integrity_view() -> dict[str, Any]:
         "sessions": sessions,
         "total_draws_processed": total_processed,
         "overall_status": "stale" if any_stale else "matched",
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
     }

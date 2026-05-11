@@ -8,7 +8,7 @@ the baseline priority shortlist against those pools.
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from bluegrass.app.playlist import _VALID_SESSIONS
@@ -325,7 +325,7 @@ def build_session_convergence(session: str) -> dict[str, Any]:
         "total_candidates": len(candidates),
         "metadata": {
             "last_processed_draw": last_draw,
-            "generated_at":        datetime.utcnow().isoformat(),
+            "generated_at":        datetime.now(UTC).isoformat(),
         },
     }
 
@@ -370,5 +370,5 @@ def build_convergence_overview() -> dict[str, Any]:
         "multi_session_candidates":      multi,
         "overview_supported_candidates": overview_supported,
         "session_summaries":             session_summaries,
-        "metadata": {"generated_at": datetime.utcnow().isoformat()},
+        "metadata": {"generated_at": datetime.now(UTC).isoformat()},
     }

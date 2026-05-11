@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from datetime import date as _date_type
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -73,7 +73,7 @@ def take_snapshot(session: str, vm: dict[str, Any], *, draw_date: str | None = N
     snap: dict[str, Any] = {
         "date": today,
         "session": session,
-        "snapshot_at": datetime.utcnow().isoformat(),
+        "snapshot_at": datetime.now(UTC).isoformat(),
         "tier_1": [
             {"number": c["number"], "score": c.get("score", 0), "signals": c.get("signals", {})}
             for c in plays.get("tier_1", [])
@@ -141,7 +141,7 @@ def score_forecast(draw_date: str, session: str, result: str) -> dict[str, Any]:
     hits["any_hit"] = any(hits[k] for k in ("exact", "box", "pair_hit", "sum_hit", "root_hit"))
 
     snap["result"] = result
-    snap["scored_at"] = datetime.utcnow().isoformat()
+    snap["scored_at"] = datetime.now(UTC).isoformat()
     snap["hits"] = hits
     _save(snap)
     return hits
