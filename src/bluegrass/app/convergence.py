@@ -354,10 +354,15 @@ def build_convergence_overview() -> dict[str, Any]:
             num_sessions.setdefault(n, []).append(sess)
 
     multi = [
-        {"number": n, "sessions": num_sessions[n]}
-        for n, cnt in counter.most_common()
-        if cnt >= 2
-    ]
+    {
+        "number": n,
+        "sessions": num_sessions[n],
+        "sessions_present": num_sessions[n],
+    }
+    for n, cnt in counter.most_common()
+    if cnt >= 2
+    ]  
+    
     multi_nums = {m["number"] for m in multi}
 
     overview_supported = [

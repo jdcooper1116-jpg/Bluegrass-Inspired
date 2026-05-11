@@ -159,3 +159,52 @@ def test_catchup_returns_zero_when_no_engine(monkeypatch):
     assert result["applied"] == 0
     assert result["skipped"] == 0
     assert result["errors"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Window separation — sync vs analysis bootstrap
+# ---------------------------------------------------------------------------
+
+def test_run_catchup_default_uses_sync_window():
+    """run_catchup() with no args must fetch SYNC_WINDOW_DAYS (30) days."""
+    from bluegrass.research.config import SYNC_WINDOW_DAYS
+    captured = []
+    with patch("bluegrass.research.catchup.fetch_all_draws",
+               side_effect=lambda days: captured.append(days) or []):
+        from bluegrass.research.catchup import run_catchup
+        run_catchup()
+    assert captured == [SYNC_WINDOW_DAYS]
+
+
+def test_run_analysis_bootstrap_uses_analysis_window():
+    """run_analysis_bootstrap() with no args must fetch ANALYSIS_WINDOW_DAYS (250) days."""
+    from bluegrass.research.config import ANALYSIS_WINDOW_DAYS
+    captured = []
+    with patch("bluegrass.research.catchup.fetch_all_draws",
+               side_effect=lambda days: captured.append(days) or []):
+        from bluegrass.research.catchup import run_analysis_bootstrap
+        run_analysis_bootstrap()
+    assert captured == [ANALYSIS_WINDOW_DAYS]
+
+
+def test_run_analysis_bootstrap_is_idempotent():
+    """Running analysis bootstrap twice applies draws once, skips on second call."""
+    rows = [{"date": "2026-05-11", "session": "Midday", "result": "123",
+             "state": "GA", "game_type": "pick3"}]
+    with patch("bluegrass.research.catchup.fetch_all_draws", return_value=rows):
+        from bluegrass.research.catchup import run_analysis_bootstrap
+        r1 = run_analysis_bootstrap()
+        r2 = run_analysis_bootstrap()
+    assert r1["applied"] == 1
+    assert r2["applied"] == 0
+    assert r2["skipped"] == 1
+
+
+def test_run_analysis_bootstrap_accepts_custom_days():
+    """run_analysis_bootstrap(days=180) must fetch exactly 180 days."""
+    captured = []
+    with patch("bluegrass.research.catchup.fetch_all_draws",
+               side_effect=lambda days: captured.append(days) or []):
+        from bluegrass.research.catchup import run_analysis_bootstrap
+        run_analysis_bootstrap(days=180)
+    assert captured == [180]

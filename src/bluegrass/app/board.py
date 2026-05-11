@@ -12,10 +12,12 @@ from typing import Any
 
 from bluegrass.app.playlist import _VALID_SESSIONS, _last_processed_draw
 from bluegrass.app.watchlist import get_watchlist
+from bluegrass.research.config import ANALYSIS_WINDOW_DAYS, SYNC_WINDOW_DAYS
 from bluegrass.research.sums import build_root_sums_board, build_sums_board
 
 _SECTION_SIZE = 4   # cards shown per family section
-_SHORTLIST_QUOTA = 3  # slots per family in the shortlist (3 × 4 = 12)
+_SHORTLIST_QUOTA = 3  # slots per family in the shortlist (sums, root_sums, pairs)
+_COMBO_SHORTLIST_QUOTA = 2  # combinations capped at 2 so they can't dominate the top 5
 _PULL = 10           # rows fetched per family before scoring
 
 
@@ -137,7 +139,7 @@ def _build_board_shortlist(
         _pick_quota(sums, "sum", _score_sum, session, _SHORTLIST_QUOTA),
         _pick_quota(root_sums, "root_sum", _score_sum, session, _SHORTLIST_QUOTA),
         _pick_quota(pairs, "pair", _score_pair, session, _SHORTLIST_QUOTA),
-        _pick_quota(combos, "combination", _score_combo, session, _SHORTLIST_QUOTA),
+        _pick_quota(combos, "combination", _score_combo, session, _COMBO_SHORTLIST_QUOTA),
     ]
 
     family_labels = ("sum", "root_sum", "pair", "combination")
@@ -272,7 +274,9 @@ def build_session_board(session: str) -> dict[str, Any]:
         "rationale": rationale,
         "metadata": {
             "session": session,
-            "source": "baseline+runtime",
+            "source": "engine-runtime",
+            "analysis_window_days": ANALYSIS_WINDOW_DAYS,
+            "sync_window_days": SYNC_WINDOW_DAYS,
             "last_processed_draw": _last_processed_draw(session),
             "generated_at": generated_at,
         },

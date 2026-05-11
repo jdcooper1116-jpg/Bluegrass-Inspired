@@ -180,7 +180,9 @@ def test_metadata_has_required_keys() -> None:
     board = build_session_board("Midday")
     meta = board["metadata"]
     assert meta["session"] == "Midday"
-    assert meta["source"] == "baseline+runtime"
+    assert meta["source"] == "engine-runtime"
+    assert meta["analysis_window_days"] == 250
+    assert meta["sync_window_days"] == 30
     assert "last_processed_draw" in meta
     assert "generated_at" in meta
 

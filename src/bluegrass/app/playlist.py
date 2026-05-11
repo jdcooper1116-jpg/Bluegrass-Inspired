@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from bluegrass.app.watchlist import get_watchlist
+from bluegrass.research.config import ANALYSIS_WINDOW_DAYS, SYNC_WINDOW_DAYS
 from bluegrass.research.stats_store import load_stats_state
 from bluegrass.research.sums import build_root_sums_board, build_sums_board
 
@@ -174,7 +175,9 @@ def build_session_stats(session: str) -> dict[str, Any]:
         "playlist_preview": preview,
         "metadata": {
             "session": session,
-            "source": "baseline+runtime",
+            "source": "engine-runtime",
+            "analysis_window_days": ANALYSIS_WINDOW_DAYS,
+            "sync_window_days": SYNC_WINDOW_DAYS,
             "last_processed_draw": _last_processed_draw(session),
         },
     }

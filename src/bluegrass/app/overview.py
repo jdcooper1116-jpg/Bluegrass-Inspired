@@ -19,6 +19,7 @@ from bluegrass.app.board import (
     _score_sum,
     build_session_board,
 )
+from bluegrass.research.config import ANALYSIS_WINDOW_DAYS, SYNC_WINDOW_DAYS
 
 _SESSIONS = ("Midday", "Evening", "Night")
 _SECTION_LIMIT = 5   # top cards per family section in overview
@@ -268,7 +269,9 @@ def build_all_draws_overview() -> dict[str, Any]:
         "rationale": rationale,
         "metadata": {
             "sessions": list(_SESSIONS),
-            "source": "baseline+runtime",
+            "source": "engine-runtime",
+            "analysis_window_days": ANALYSIS_WINDOW_DAYS,
+            "sync_window_days": SYNC_WINDOW_DAYS,
             "generated_at": generated_at,
         },
     }

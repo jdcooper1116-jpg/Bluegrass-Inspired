@@ -19,6 +19,7 @@ from bluegrass.engine.client import EngineClientError, fetch_latest_results
 from bluegrass.engine.intake import normalize_result
 from bluegrass.frontend import router as frontend_router
 from bluegrass.research.baseline import baseline_packet_summary
+from bluegrass.research.config import ANALYSIS_WINDOW_DAYS, SYNC_WINDOW_DAYS
 from bluegrass.research.refresh import refresh_from_result
 
 _log = logging.getLogger(__name__)
@@ -26,16 +27,24 @@ _log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """On startup: apply any missing draws, then start the background scheduler."""
+    """On startup: run the 250-day analysis bootstrap, then start the scheduler.
+
+    The analysis bootstrap (ANALYSIS_WINDOW_DAYS) ensures overdue boards have
+    enough verified draw history for meaningful draws_since values.
+    It is idempotent — already-processed draws are skipped.
+
+    The scheduler uses the shorter SYNC_WINDOW_DAYS (30) for ongoing catch-up.
+    """
     try:
-        from bluegrass.research.catchup import run_catchup
-        result = run_catchup()
+        from bluegrass.research.catchup import run_analysis_bootstrap
+        result = run_analysis_bootstrap()
         _log.info(
-            "startup catch-up: applied=%d skipped=%d errors=%d",
+            "startup analysis bootstrap (%dd): applied=%d skipped=%d errors=%d",
+            ANALYSIS_WINDOW_DAYS,
             result["applied"], result["skipped"], result["errors"],
         )
     except Exception:
-        _log.exception("startup catch-up failed")
+        _log.exception("startup analysis bootstrap failed")
 
     try:
         from bluegrass.research.scheduler import start_scheduler
@@ -46,7 +55,7 @@ async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield  # app runs
 
 
-app = FastAPI(title="Bluegrass Baseline API", version="0.2.0", lifespan=_lifespan)
+app = FastAPI(title="Bluegrass Baseline API", version="0.3.0", lifespan=_lifespan)
 
 _STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
@@ -147,17 +156,39 @@ def refresh_run(payload: dict) -> dict[str, object]:
 
 @app.post("/refresh/sync-latest")
 def refresh_sync_latest() -> dict[str, object]:
-    """Fetch all draws from the rolling 30-day window and apply any new ones.
+    """Fetch the rolling {sync_window}-day window and apply any new draws.
 
-    Uses the full catch-up path (not just latest per session) so gaps during
-    downtime are filled. Skips draws already processed (idempotent).
-    """
+    Operational sync — uses SYNC_WINDOW_DAYS ({sync_window}).
+    For a full analysis re-bootstrap use /refresh/analysis-bootstrap instead.
+    Skips draws already processed (idempotent).
+    """.format(sync_window=SYNC_WINDOW_DAYS)
     from bluegrass.research.catchup import run_catchup
     result = run_catchup()
     return {
         "processed_count": result["applied"],
         "skipped_count": result["skipped"],
         "error_count": result["errors"],
+        "sync_window_days": SYNC_WINDOW_DAYS,
+    }
+
+
+@app.post("/refresh/analysis-bootstrap")
+def refresh_analysis_bootstrap() -> dict[str, object]:
+    """Re-run the {window}-day deep analysis bootstrap. Idempotent.
+
+    Use this after a long outage, fresh install, or any time overdue boards
+    look stale. Fetches {window} days of draw history from the engine and
+    applies any draws not yet in stats_state.json.
+
+    The scheduler's {sync}-day rolling sync continues as normal after this.
+    """.format(window=ANALYSIS_WINDOW_DAYS, sync=SYNC_WINDOW_DAYS)
+    from bluegrass.research.catchup import run_analysis_bootstrap
+    result = run_analysis_bootstrap()
+    return {
+        "processed_count": result["applied"],
+        "skipped_count": result["skipped"],
+        "error_count": result["errors"],
+        "analysis_window_days": ANALYSIS_WINDOW_DAYS,
     }
 
 
