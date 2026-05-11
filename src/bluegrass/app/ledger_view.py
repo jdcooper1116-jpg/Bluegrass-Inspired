@@ -60,21 +60,49 @@ def _pct(rate: float) -> str:
 
 
 def _enrich_snap(snap: dict[str, Any]) -> dict[str, Any]:
-    """Add display-ready fields to a raw snapshot dict."""
+    """Add display-ready fields to a raw snapshot dict.
+
+    Handles both old snapshots (missing attribution fields) and new ones
+    gracefully — all new fields fall back to safe defaults.
+    """
     s = dict(snap)
     hits = s.get("hits") or {}
     s["is_scored"] = s.get("result") is not None
-    s["hit_exact"]    = hits.get("exact", False)
-    s["hit_box"]      = hits.get("box", False)
-    s["hit_pair"]     = hits.get("pair_hit", False)
-    s["hit_sum"]      = hits.get("sum_hit", False)
-    s["hit_root"]     = hits.get("root_hit", False)
-    s["hit_any"]      = hits.get("any_hit", False)
-    s["hit_near"]     = hits.get("near_miss", False)
-    # Tier 1 play numbers (up to 5 for display)
-    s["tier_1_preview"] = [c["number"] for c in s.get("tier_1", [])[:5]]
-    s["tier_2_count"]   = len(s.get("tier_2", []))
-    s["tier_3_count"]   = len(s.get("tier_3", []))
+
+    # ── Original boolean flags ────────────────────────────────────────────
+    s["hit_exact"]  = hits.get("exact", False)
+    s["hit_box"]    = hits.get("box", False)
+    s["hit_pair"]   = hits.get("pair_hit", False)
+    s["hit_sum"]    = hits.get("sum_hit", False)
+    s["hit_root"]   = hits.get("root_hit", False)
+    s["hit_any"]    = hits.get("any_hit", False)
+    s["hit_near"]   = hits.get("near_miss", False)
+
+    # ── Richer attribution (new — may be absent in old snapshots) ─────────
+    s["verdict"]            = hits.get("verdict", "")
+    s["result_in_tier"]     = hits.get("result_in_tier")      # int | None
+    s["result_box_in_tier"] = hits.get("result_box_in_tier")  # int | None
+    s["support_channels"]   = hits.get("support_channels", [])
+
+    # ── Snapshot freshness metadata ───────────────────────────────────────
+    s["snapshot_freshness_status"]   = s.get("snapshot_freshness_status", "unknown")
+    s["snapshot_source_state_date"]  = s.get("snapshot_source_state_date")
+    s["snapshot_draws_behind"]       = s.get("snapshot_draws_behind")
+
+    # ── Tier contents for templates ────────────────────────────────────────
+    tier_1 = s.get("tier_1", [])
+    tier_2 = s.get("tier_2", [])
+    tier_3 = s.get("tier_3", [])
+
+    s["tier_1_numbers"]  = [c["number"] for c in tier_1]
+    s["tier_2_numbers"]  = [c["number"] for c in tier_2]
+    s["tier_3_numbers"]  = [c["number"] for c in tier_3]
+    s["tier_1_preview"]  = s["tier_1_numbers"][:5]
+    s["tier_1_count"]    = len(tier_1)
+    s["tier_2_count"]    = len(tier_2)
+    s["tier_3_count"]    = len(tier_3)
+    s["total_candidates"] = len(tier_1) + len(tier_2) + len(tier_3)
+
     return s
 
 

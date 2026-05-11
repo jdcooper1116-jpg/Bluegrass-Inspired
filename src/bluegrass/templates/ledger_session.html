@@ -6,9 +6,6 @@
 <span style="font-size:11px;color:var(--muted)">Read-only · {{ vm.generated_at[:10] }}</span>
 {% endblock %}
 
-{# ------------------------------------------------------------------ #}
-{# Sidebar: session metrics                                            #}
-{# ------------------------------------------------------------------ #}
 {% block sidebar_freshness %}
 <div class="sb-freshness-row">
   <span>Total</span>
@@ -28,45 +25,36 @@
   <span style="color:var(--green)"><strong>{{ vm.metrics.any_hit_pct }}</strong></span>
 </div>
 <div class="sb-freshness-row">
-  <span>Exact</span>
-  <span>{{ vm.metrics.exact_pct }}</span>
+  <span>Exact</span><span>{{ vm.metrics.exact_pct }}</span>
 </div>
 <div class="sb-freshness-row">
-  <span>Box</span>
-  <span>{{ vm.metrics.box_pct }}</span>
+  <span>Box</span><span>{{ vm.metrics.box_pct }}</span>
 </div>
 <div class="sb-freshness-row">
-  <span>Pair</span>
-  <span>{{ vm.metrics.pair_pct }}</span>
+  <span>Pair</span><span>{{ vm.metrics.pair_pct }}</span>
 </div>
 <div class="sb-freshness-row">
-  <span>Sum</span>
-  <span>{{ vm.metrics.sum_pct }}</span>
+  <span>Sum</span><span>{{ vm.metrics.sum_pct }}</span>
 </div>
 <div class="sb-freshness-row">
-  <span>Root</span>
-  <span>{{ vm.metrics.root_pct }}</span>
+  <span>Root</span><span>{{ vm.metrics.root_pct }}</span>
 </div>
 {% endif %}
 {% endblock %}
 
-{# ------------------------------------------------------------------ #}
-{# Rail: hit-rate bars + top signals                                   #}
-{# ------------------------------------------------------------------ #}
 {% block rail %}
 <div class="rail-section">
   <div class="rail-section-label">{{ vm.session }} Rates</div>
-
   {% if vm.metrics.scored_snapshots == 0 %}
   <div style="font-size:11px;color:var(--muted)">No scored forecasts yet</div>
   {% else %}
   {% set rates = [
-      ("Any Hit",  vm.metrics.any_hit_rate,  vm.metrics.any_hit_pct),
-      ("Exact",    vm.metrics.exact_rate,    vm.metrics.exact_pct),
-      ("Box",      vm.metrics.box_rate,      vm.metrics.box_pct),
-      ("Pair",     vm.metrics.pair_rate,     vm.metrics.pair_pct),
-      ("Sum",      vm.metrics.sum_rate,      vm.metrics.sum_pct),
-      ("Root",     vm.metrics.root_rate,     vm.metrics.root_pct),
+      ("Any Hit", vm.metrics.any_hit_rate, vm.metrics.any_hit_pct),
+      ("Exact",   vm.metrics.exact_rate,   vm.metrics.exact_pct),
+      ("Box",     vm.metrics.box_rate,     vm.metrics.box_pct),
+      ("Pair",    vm.metrics.pair_rate,    vm.metrics.pair_pct),
+      ("Sum",     vm.metrics.sum_rate,     vm.metrics.sum_pct),
+      ("Root",    vm.metrics.root_rate,    vm.metrics.root_pct),
   ] %}
   {% for label, rate, pct in rates %}
   <div class="rail-item" style="flex-direction:column;align-items:flex-start;gap:2px;margin-bottom:8px">
@@ -83,9 +71,6 @@
 </div>
 {% endblock %}
 
-{# ------------------------------------------------------------------ #}
-{# Main content                                                        #}
-{# ------------------------------------------------------------------ #}
 {% block content %}
 
 <div class="pb-page-header">
@@ -98,12 +83,10 @@
 
 {% if vm.metrics.scored_snapshots == 0 and vm.metrics.total_snapshots == 0 %}
 <div style="font-size:13px;color:var(--muted);margin-bottom:var(--gap)">
-  No forecast snapshots for {{ vm.session }} yet.
-  Snapshots are written automatically before each draw.
+  No forecast snapshots for {{ vm.session }} yet. Snapshots are written automatically before each draw.
 </div>
 {% else %}
 
-{# ── Session reliability summary ── #}
 <div class="pb-section-title">
   {{ vm.session }} Reliability
   <span class="count-badge">{{ vm.metrics.scored_snapshots }} scored of {{ vm.metrics.total_snapshots }}</span>
@@ -129,10 +112,8 @@
 {% endif %}
 
 <hr class="pb-section-divider">
-
 {% endif %}
 
-{# ── Forecast rows ── #}
 <div class="pb-section-title">
   Forecast Log
   <span class="count-badge">{{ vm.forecasts | length }} entries</span>
@@ -143,80 +124,147 @@
 {% else %}
 
 <div class="ledger-forecast-list">
-  {% for snap in vm.forecasts %}
-  <div class="ledger-row {% if snap.is_scored %}{% if snap.hit_any %}ledger-row-hit{% else %}ledger-row-miss{% endif %}{% else %}ledger-row-pending{% endif %}">
+{% for snap in vm.forecasts %}
 
-    {# Date + scored status #}
-    <div class="ledger-row-meta">
-      <span class="ledger-date">{{ snap.date }}</span>
-      {% if snap.is_scored %}
-        <span class="freshness-badge freshness-matched" style="font-size:9px">scored</span>
-      {% else %}
-        <span class="freshness-badge freshness-baseline-only" style="font-size:9px">pending</span>
+{% if snap.is_scored %}
+  {% if snap.result_in_tier %}{% set row_class = "ledger-row-exact" %}
+  {% elif snap.result_box_in_tier %}{% set row_class = "ledger-row-box" %}
+  {% elif snap.support_channels %}{% set row_class = "ledger-row-support" %}
+  {% else %}{% set row_class = "ledger-row-miss" %}{% endif %}
+{% else %}{% set row_class = "ledger-row-pending" %}{% endif %}
+
+<div class="ledger-detail-card {{ row_class }}">
+
+  {# ── Header: date · session · freshness · scored status · verdict ── #}
+  <div class="ldc-header">
+    <span class="ledger-date">{{ snap.date }}</span>
+    <span class="ldc-session">{{ snap.session }}</span>
+
+    {% set fstatus = snap.snapshot_freshness_status or "unknown" %}
+    <span class="freshness-badge freshness-{{ fstatus | replace(' ', '-') }}" style="font-size:9px"
+          title="Snapshot built from {{ fstatus }} data{% if snap.snapshot_draws_behind %} ({{ snap.snapshot_draws_behind }}d behind){% endif %}{% if snap.snapshot_source_state_date %} · last draw {{ snap.snapshot_source_state_date }}{% endif %}">
+      snap:{{ fstatus }}
+    </span>
+
+    {% if snap.is_scored %}
+      <span class="freshness-badge freshness-matched" style="font-size:9px">scored</span>
+      {% if snap.verdict %}
+      <span class="ldc-verdict
+        {%- if snap.result_in_tier %} ldc-verdict-exact
+        {%- elif snap.result_box_in_tier %} ldc-verdict-box
+        {%- elif snap.support_channels %} ldc-verdict-support
+        {%- else %} ldc-verdict-miss{% endif %}">{{ snap.verdict }}</span>
       {% endif %}
-    </div>
+    {% else %}
+      <span class="freshness-badge freshness-baseline-only" style="font-size:9px">pending</span>
+    {% endif %}
 
-    {# Result + hit flags #}
-    <div class="ledger-row-result">
+    {% if snap.snapshot_source_state_date %}
+    <span style="font-size:9px;color:var(--muted);margin-left:auto">
+      built from: {{ snap.snapshot_source_state_date }}
+    </span>
+    {% endif %}
+  </div>
+
+  {# ── Body: result col + forecast col ── #}
+  <div class="ldc-body">
+
+    {# Left: result, tier attribution, support channels, hit flags #}
+    <div class="ldc-result-col">
       {% if snap.is_scored %}
-        <span class="ledger-result-num">{{ snap.result }}</span>
-        <div class="ledger-row-flags">
+        <div class="ledger-result-num">{{ snap.result }}</div>
+
+        {% if snap.result_in_tier %}
+        <div class="ldc-tier-attr ldc-tier-exact">Exact — Tier {{ snap.result_in_tier }}</div>
+        {% elif snap.result_box_in_tier %}
+        <div class="ldc-tier-attr ldc-tier-box">Box — Tier {{ snap.result_box_in_tier }}</div>
+        {% endif %}
+
+        {% if snap.support_channels %}
+        <div class="ldc-channels">
+          {% for ch in snap.support_channels %}
+          <span class="ldc-channel">{{ ch }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="ledger-row-flags" style="margin-top:6px">
           <span class="ledger-flag {% if snap.hit_exact %}ledger-flag-on{% endif %}" title="Exact hit">EX</span>
           <span class="ledger-flag {% if snap.hit_box %}ledger-flag-on{% endif %}" title="Box hit">BX</span>
-          <span class="ledger-flag {% if snap.hit_pair %}ledger-flag-on{% endif %}" title="Pair hit">PR</span>
-          <span class="ledger-flag {% if snap.hit_sum %}ledger-flag-on{% endif %}" title="Sum hit">SM</span>
-          <span class="ledger-flag {% if snap.hit_root %}ledger-flag-on{% endif %}" title="Root hit">RT</span>
+          <span class="ledger-flag {% if snap.hit_pair %}ledger-flag-on{% endif %}" title="Pair support">PR</span>
+          <span class="ledger-flag {% if snap.hit_sum %}ledger-flag-on{% endif %}" title="Sum support">SM</span>
+          <span class="ledger-flag {% if snap.hit_root %}ledger-flag-on{% endif %}" title="Root support">RT</span>
           {% if snap.hit_near and not snap.hit_exact %}
-          <span class="ledger-flag ledger-flag-near" title="Near miss (box hit, not exact)">NM</span>
+          <span class="ledger-flag ledger-flag-near" title="Near miss">NM</span>
           {% endif %}
         </div>
       {% else %}
-        <span style="color:var(--muted);font-size:11px">—</span>
-        <div class="ledger-row-flags" style="visibility:hidden">
-          <span class="ledger-flag">EX</span>
-          <span class="ledger-flag">BX</span>
-          <span class="ledger-flag">PR</span>
-          <span class="ledger-flag">SM</span>
-          <span class="ledger-flag">RT</span>
-        </div>
+        <div style="color:var(--muted);font-size:12px;margin-top:8px">Pending result</div>
       {% endif %}
     </div>
 
-    {# Top signals (sum / root / pairs) #}
-    <div class="ledger-row-signals">
-      {% if snap.top_sum %}
-      <span class="ledger-signal"><span style="color:var(--muted)">S</span> {{ snap.top_sum }}</span>
-      {% endif %}
-      {% if snap.top_root %}
-      <span class="ledger-signal"><span style="color:var(--muted)">R</span> {{ snap.top_root }}</span>
-      {% endif %}
-      {% set top_pairs = snap.top_pairs or {} %}
-      {% if top_pairs.front %}
-      <span class="ledger-signal"><span style="color:var(--muted)">F</span> {{ top_pairs.front }}</span>
-      {% endif %}
-      {% if top_pairs.back %}
-      <span class="ledger-signal"><span style="color:var(--muted)">B</span> {{ top_pairs.back }}</span>
-      {% endif %}
-    </div>
+    {# Right: frozen forecast — signals + full tier lists #}
+    <div class="ldc-forecast-col">
 
-    {# Tier 1 play preview #}
-    <div class="ledger-row-plays">
-      <span style="font-size:9px;color:var(--muted);margin-right:4px">T1</span>
-      {% for num in snap.tier_1_preview %}
-      <span class="ledger-play {% if snap.is_scored and num == snap.result %}ledger-play-exact{% endif %}">{{ num }}</span>
-      {% endfor %}
-      {% if not snap.tier_1_preview %}
-      <span style="color:var(--muted);font-size:10px">—</span>
-      {% endif %}
-      {% if snap.tier_2_count > 0 %}
-      <span style="font-size:9px;color:var(--muted);margin-left:4px">+{{ snap.tier_2_count }} T2</span>
-      {% endif %}
-    </div>
+      <div class="ldc-signals">
+        {% if snap.top_sum %}
+        <span class="ledger-signal"><span style="color:var(--muted)">Sum</span> {{ snap.top_sum }}</span>
+        {% endif %}
+        {% if snap.top_root %}
+        <span class="ledger-signal"><span style="color:var(--muted)">Root</span> {{ snap.top_root }}</span>
+        {% endif %}
+        {% set top_pairs = snap.top_pairs or {} %}
+        {% if top_pairs.front %}
+        <span class="ledger-signal"><span style="color:var(--muted)">Frt</span> {{ top_pairs.front }}</span>
+        {% endif %}
+        {% if top_pairs.back %}
+        <span class="ledger-signal"><span style="color:var(--muted)">Bck</span> {{ top_pairs.back }}</span>
+        {% endif %}
+        {% if top_pairs.split %}
+        <span class="ledger-signal"><span style="color:var(--muted)">Spl</span> {{ top_pairs.split }}</span>
+        {% endif %}
+      </div>
 
+      {% if snap.tier_1_numbers %}
+      <div class="ldc-tier-row">
+        <span class="ldc-tier-label">T1</span>
+        {% for num in snap.tier_1_numbers %}
+        <span class="ledger-play
+          {%- if snap.is_scored and num == snap.result %} ledger-play-exact
+          {%- elif snap.is_scored and snap.result_box_in_tier and (num | list | sort | join) == (snap.result | list | sort | join) %} ledger-play-box
+          {%- endif %}">{{ num }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if snap.tier_2_numbers %}
+      <div class="ldc-tier-row ldc-tier-row-dim">
+        <span class="ldc-tier-label">T2</span>
+        {% for num in snap.tier_2_numbers %}
+        <span class="ledger-play ledger-play-dim
+          {%- if snap.is_scored and num == snap.result %} ledger-play-exact
+          {%- elif snap.is_scored and snap.result_box_in_tier and (num | list | sort | join) == (snap.result | list | sort | join) %} ledger-play-box
+          {%- endif %}">{{ num }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if snap.tier_3_count > 0 %}
+      <div class="ldc-tier-row ldc-tier-row-dim">
+        <span class="ldc-tier-label">T3</span>
+        <span style="font-size:10px;color:var(--muted)">{{ snap.tier_3_count }} candidates</span>
+      </div>
+      {% endif %}
+
+      {% if not snap.tier_1_numbers and not snap.tier_2_numbers %}
+      <div style="font-size:11px;color:var(--muted)">No candidates in snapshot</div>
+      {% endif %}
+
+    </div>
   </div>
-  {% endfor %}
 </div>
-
+{% endfor %}
+</div>
 {% endif %}
 
 {% endblock %}
