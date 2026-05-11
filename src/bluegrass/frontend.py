@@ -22,6 +22,7 @@ from bluegrass.app.board import build_session_board
 from bluegrass.app.classify import classify_digit_pattern, classify_pair, classify_play_type
 from bluegrass.app.convergence import build_convergence_overview, build_session_convergence
 from bluegrass.app.integrity import build_integrity_view
+from bluegrass.app.ledger_view import build_ledger_overview, build_ledger_session
 from bluegrass.app.overview import build_all_draws_overview
 from bluegrass.app.play_builder import build_play_builder_overview, build_play_builder_session
 from bluegrass.app.playlist import _VALID_SESSIONS
@@ -284,6 +285,38 @@ def ui_integrity(
         "vm": vm,
         "sync_result": sync_result,
         "active": "integrity",
+    })
+
+
+@router.get("/ledger", response_class=HTMLResponse, include_in_schema=False)
+def ui_ledger_overview(request: Request) -> Response:
+    """Forecast ledger overview: reliability metrics across all sessions."""
+    vm = build_ledger_overview()
+    return templates.TemplateResponse(request, "ledger_overview.html", {
+        **_page_context(),
+        "vm": vm,
+        "active": "ledger",
+    })
+
+
+@router.get("/ledger/session/{session}", response_class=HTMLResponse, include_in_schema=False)
+def ui_ledger_session(session: str, request: Request) -> Response:
+    """Forecast ledger for a single session."""
+    normalized = _SESSION_NORMALIZE.get(session.lower())
+    if normalized and normalized != session:
+        return RedirectResponse(url=f"/ledger/session/{normalized}", status_code=301)
+    if session not in _VALID_SESSIONS:
+        return templates.TemplateResponse(
+            request, "404.html",
+            {"active": None,
+             "detail": f"Session {session!r} not found. Valid: Midday, Evening, Night."},
+            status_code=404,
+        )
+    vm = build_ledger_session(session)
+    return templates.TemplateResponse(request, "ledger_session.html", {
+        **_page_context(),
+        "vm": vm,
+        "active": "ledger",
     })
 
 

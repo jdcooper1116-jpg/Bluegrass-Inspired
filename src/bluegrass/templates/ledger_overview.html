@@ -1,0 +1,217 @@
+{% extends "base_pb.html" %}
+
+{% block title %}Forecast Ledger · Bluegrass{% endblock %}
+
+{% block topnav_right %}
+<span style="font-size:11px;color:var(--muted)">Read-only · {{ vm.generated_at[:10] }}</span>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Sidebar: per-session any-hit summary                               #}
+{# ------------------------------------------------------------------ #}
+{% block sidebar_freshness %}
+<div class="sb-freshness-row">
+  <span>Total</span>
+  <span>{{ vm.overall.total_snapshots }}</span>
+</div>
+<div class="sb-freshness-row">
+  <span>Scored</span>
+  <span>{{ vm.overall.scored_snapshots }}</span>
+</div>
+<div class="sb-freshness-row">
+  <span>Any-hit</span>
+  <span style="color:var(--green)">{{ vm.overall.any_hit_pct }}</span>
+</div>
+{% for sess, sm in vm.by_session.items() %}
+<div class="sb-freshness-row" style="margin-top:6px">
+  <span style="color:var(--fg)">{{ sess }}</span>
+  <span style="color:{% if sm.scored_snapshots > 0 %}var(--green){% else %}var(--muted){% endif %}">
+    {{ sm.any_hit_pct }}
+  </span>
+</div>
+{% endfor %}
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Rail: recent 10 forecasts quick list                               #}
+{# ------------------------------------------------------------------ #}
+{% block rail %}
+<div class="rail-section">
+  <div class="rail-section-label">Recent Forecasts</div>
+  {% if vm.recent %}
+    {% for snap in vm.recent[:10] %}
+    <div class="rail-item" style="flex-direction:column;align-items:flex-start;gap:1px;margin-bottom:6px">
+      <span style="font-size:10px;color:var(--fg);font-weight:600">{{ snap.date }} · {{ snap.session }}</span>
+      {% if snap.is_scored %}
+        <span style="font-size:10px;font-family:monospace;color:var(--accent)">{{ snap.result }}</span>
+        <span style="font-size:9px;color:var(--muted)">
+          {% if snap.hit_any %}
+            {% if snap.hit_exact %}✓ exact{% elif snap.hit_box %}✓ box{% else %}✓ signal{% endif %}
+          {% else %}
+            miss
+          {% endif %}
+        </span>
+      {% else %}
+        <span style="font-size:9px;color:var(--muted)">not scored</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div style="font-size:11px;color:var(--muted)">No forecasts yet</div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Main content                                                        #}
+{# ------------------------------------------------------------------ #}
+{% block content %}
+
+<div class="pb-page-header">
+  <h1 class="pb-page-title">Forecast Ledger</h1>
+  <span class="pb-page-sub">Generated {{ vm.generated_at[:19] | replace("T", " ") }}</span>
+</div>
+
+{# ── Reliability summary cards ── #}
+<div class="pb-section-title">
+  Overall Reliability
+  <span class="count-badge">{{ vm.overall.scored_snapshots }} scored · {{ vm.overall.total_snapshots }} total</span>
+</div>
+
+{% if vm.overall.scored_snapshots == 0 %}
+<div style="font-size:13px;color:var(--muted);margin-bottom:var(--gap)">
+  No scored forecasts yet. Snapshots are written automatically before each draw; scoring happens when results come in via Sync Latest.
+</div>
+{% else %}
+<div class="ledger-rate-grid">
+
+  <div class="ledger-rate-card ledger-rate-any">
+    <div class="lrc-label">Any Hit</div>
+    <div class="lrc-value">{{ vm.overall.any_hit_pct }}</div>
+    <div class="lrc-sub">{{ vm.overall.scored_snapshots }} scored</div>
+  </div>
+
+  <div class="ledger-rate-card">
+    <div class="lrc-label">Exact</div>
+    <div class="lrc-value">{{ vm.overall.exact_pct }}</div>
+  </div>
+
+  <div class="ledger-rate-card">
+    <div class="lrc-label">Box</div>
+    <div class="lrc-value">{{ vm.overall.box_pct }}</div>
+  </div>
+
+  <div class="ledger-rate-card">
+    <div class="lrc-label">Pair</div>
+    <div class="lrc-value">{{ vm.overall.pair_pct }}</div>
+  </div>
+
+  <div class="ledger-rate-card">
+    <div class="lrc-label">Sum</div>
+    <div class="lrc-value">{{ vm.overall.sum_pct }}</div>
+  </div>
+
+  <div class="ledger-rate-card">
+    <div class="lrc-label">Root</div>
+    <div class="lrc-value">{{ vm.overall.root_pct }}</div>
+  </div>
+
+</div>
+{% endif %}
+
+<hr class="pb-section-divider">
+
+{# ── Per-session breakdown ── #}
+<div class="pb-section-title">By Session</div>
+
+<table class="ledger-session-table">
+  <thead>
+    <tr>
+      <th>Session</th>
+      <th>Total</th>
+      <th>Scored</th>
+      <th>Any Hit</th>
+      <th>Exact</th>
+      <th>Box</th>
+      <th>Pair</th>
+      <th>Sum</th>
+      <th>Root</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for sess in ["Midday", "Evening", "Night"] %}
+    {% set sm = vm.by_session[sess] %}
+    <tr>
+      <td><a href="/ledger/session/{{ sess }}" style="color:var(--accent)">{{ sess }}</a></td>
+      <td>{{ sm.total_snapshots }}</td>
+      <td>{{ sm.scored_snapshots }}</td>
+      <td style="color:{% if sm.scored_snapshots > 0 %}var(--green){% else %}var(--muted){% endif %}">
+        <strong>{{ sm.any_hit_pct }}</strong>
+      </td>
+      <td>{{ sm.exact_pct }}</td>
+      <td>{{ sm.box_pct }}</td>
+      <td>{{ sm.pair_pct }}</td>
+      <td>{{ sm.sum_pct }}</td>
+      <td>{{ sm.root_pct }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<hr class="pb-section-divider">
+
+{# ── Recent forecasts ── #}
+<div class="pb-section-title">
+  Recent Forecasts
+  <span class="count-badge">last {{ vm.recent | length }}</span>
+</div>
+
+{% if not vm.recent %}
+<div style="font-size:13px;color:var(--muted)">No forecast snapshots on disk yet.</div>
+{% else %}
+
+<div class="ledger-forecast-list">
+  {% for snap in vm.recent %}
+  <div class="ledger-row {% if snap.is_scored %}{% if snap.hit_any %}ledger-row-hit{% else %}ledger-row-miss{% endif %}{% else %}ledger-row-pending{% endif %}">
+
+    <div class="ledger-row-meta">
+      <span class="ledger-date">{{ snap.date }}</span>
+      <a href="/ledger/session/{{ snap.session }}" class="ledger-sess-link">{{ snap.session }}</a>
+    </div>
+
+    <div class="ledger-row-result">
+      {% if snap.is_scored %}
+        <span class="ledger-result-num">{{ snap.result }}</span>
+      {% else %}
+        <span style="color:var(--muted);font-size:11px">not scored</span>
+      {% endif %}
+    </div>
+
+    <div class="ledger-row-flags">
+      {% if snap.is_scored %}
+        <span class="ledger-flag {% if snap.hit_exact %}ledger-flag-on{% endif %}">EX</span>
+        <span class="ledger-flag {% if snap.hit_box %}ledger-flag-on{% endif %}">BX</span>
+        <span class="ledger-flag {% if snap.hit_pair %}ledger-flag-on{% endif %}">PR</span>
+        <span class="ledger-flag {% if snap.hit_sum %}ledger-flag-on{% endif %}">SM</span>
+        <span class="ledger-flag {% if snap.hit_root %}ledger-flag-on{% endif %}">RT</span>
+      {% else %}
+        <span style="color:var(--muted);font-size:10px">—</span>
+      {% endif %}
+    </div>
+
+    <div class="ledger-row-plays">
+      {% for num in snap.tier_1_preview %}
+      <span class="ledger-play {% if snap.is_scored and num == snap.result %}ledger-play-exact{% elif snap.is_scored and snap.hit_box and num[::-1] == snap.result or (snap.result and num | sort | join == snap.result | sort | join) %}ledger-play-box{% endif %}">{{ num }}</span>
+      {% endfor %}
+      {% if snap.tier_2_count > 0 %}
+      <span style="font-size:9px;color:var(--muted)">+{{ snap.tier_2_count }} T2</span>
+      {% endif %}
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+
+{% endif %}
+
+{% endblock %}

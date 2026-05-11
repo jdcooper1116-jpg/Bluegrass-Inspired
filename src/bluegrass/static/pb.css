@@ -755,3 +755,200 @@ body {
   border-color: var(--border);
   color: var(--muted);
 }
+
+/* ================================================================
+   Forecast Ledger
+   ================================================================ */
+
+/* Rate cards grid */
+.ledger-rate-grid {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: var(--gap);
+}
+
+.ledger-rate-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.ledger-rate-any {
+  background: #0a2a1a;
+  border-color: #1a4a30;
+}
+
+.lrc-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.lrc-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.ledger-rate-any .lrc-value { color: var(--green); }
+
+.lrc-sub {
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Session breakdown table */
+.ledger-session-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-bottom: var(--gap);
+}
+
+.ledger-session-table th {
+  text-align: left;
+  font-size: 10px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding: 4px 8px;
+  font-weight: 600;
+}
+
+.ledger-session-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.ledger-session-table tr:last-child td { border-bottom: none; }
+
+/* Forecast row list */
+.ledger-forecast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 110px 160px 130px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+}
+
+.ledger-row-hit   { border-color: #1a4a30; background: #0a1a10; }
+.ledger-row-miss  { border-color: var(--border); }
+.ledger-row-pending { border-color: var(--border); opacity: 0.7; }
+
+.ledger-row-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ledger-date {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg);
+  font-family: monospace;
+}
+
+.ledger-sess-link {
+  font-size: 10px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.ledger-sess-link:hover { color: var(--accent); }
+
+.ledger-row-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ledger-result-num {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--accent);
+}
+
+.ledger-row-flags {
+  display: flex;
+  gap: 3px;
+}
+
+.ledger-flag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--border);
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+.ledger-flag-on {
+  background: #1a4a30;
+  color: var(--green);
+}
+
+.ledger-flag-near {
+  background: #2a1e08;
+  color: var(--amber);
+}
+
+.ledger-row-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.ledger-signal {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--fg);
+  background: var(--border);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.ledger-row-plays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.ledger-play {
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--border);
+  color: var(--fg);
+}
+
+.ledger-play-exact {
+  background: #1a4a30;
+  color: var(--green);
+  box-shadow: 0 0 0 1px var(--green);
+}
+
+.ledger-play-box {
+  background: #2a2010;
+  color: var(--amber);
+}
