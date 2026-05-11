@@ -27,13 +27,17 @@ _log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """On startup: run the 250-day analysis bootstrap, then start the scheduler.
+    """On startup: run the 250-day analysis bootstrap, ensure today's forecast
+    snapshots exist, then start the background scheduler.
 
     The analysis bootstrap (ANALYSIS_WINDOW_DAYS) ensures overdue boards have
     enough verified draw history for meaningful draws_since values.
-    It is idempotent — already-processed draws are skipped.
 
-    The scheduler uses the shorter SYNC_WINDOW_DAYS (30) for ongoing catch-up.
+    ensure_todays_snapshots() writes the current Play Builder state for each
+    session to the ledger so results can be scored when they arrive.
+
+    Both operations are idempotent — safe to run on every startup.
+    The scheduler uses SYNC_WINDOW_DAYS (30) for ongoing catch-up.
     """
     try:
         from bluegrass.research.catchup import run_analysis_bootstrap
@@ -45,6 +49,16 @@ async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         )
     except Exception:
         _log.exception("startup analysis bootstrap failed")
+
+    try:
+        from bluegrass.app.forecast_orchestrator import ensure_todays_snapshots
+        snap = ensure_todays_snapshots()
+        _log.info(
+            "startup snapshots: created=%s skipped=%s errors=%s",
+            snap["created"], snap["skipped"], snap["errors"],
+        )
+    except Exception:
+        _log.exception("startup snapshot creation failed")
 
     try:
         from bluegrass.research.scheduler import start_scheduler
@@ -156,19 +170,22 @@ def refresh_run(payload: dict) -> dict[str, object]:
 
 @app.post("/refresh/sync-latest")
 def refresh_sync_latest() -> dict[str, object]:
-    """Fetch the rolling {sync_window}-day window and apply any new draws.
+    """Fetch the rolling {sync_window}-day window, apply new draws, and score forecasts.
 
     Operational sync — uses SYNC_WINDOW_DAYS ({sync_window}).
+    Also ensures today's forecast snapshots exist and scores any applied results.
     For a full analysis re-bootstrap use /refresh/analysis-bootstrap instead.
     Skips draws already processed (idempotent).
     """.format(sync_window=SYNC_WINDOW_DAYS)
-    from bluegrass.research.catchup import run_catchup
-    result = run_catchup()
+    from bluegrass.app.forecast_orchestrator import run_catchup_with_ledger
+    result = run_catchup_with_ledger()
     return {
         "processed_count": result["applied"],
         "skipped_count": result["skipped"],
         "error_count": result["errors"],
         "sync_window_days": SYNC_WINDOW_DAYS,
+        "snapshots_created": result.get("snapshots_created", 0),
+        "scored": result.get("scored", 0),
     }
 
 

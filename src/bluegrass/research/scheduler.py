@@ -34,15 +34,25 @@ def start_scheduler(interval: int | None = None) -> None:
         while True:
             time.sleep(effective_interval)
             try:
-                from bluegrass.research.catchup import run_catchup
-                result = run_catchup()
-                if result["applied"] > 0:
-                    _log.info(
-                        "scheduler catch-up: applied=%d skipped=%d errors=%d",
-                        result["applied"], result["skipped"], result["errors"],
-                    )
+                # Use the ledger-aware catchup when available (app layer —
+                # imported lazily here to avoid a research → app module cycle).
+                from bluegrass.app.forecast_orchestrator import run_catchup_with_ledger
+                result = run_catchup_with_ledger()
             except Exception:
-                _log.exception("scheduler catch-up failed")
+                try:
+                    from bluegrass.research.catchup import run_catchup
+                    result = run_catchup()
+                except Exception:
+                    _log.exception("scheduler catch-up failed")
+                    continue
+            if result.get("applied", 0) > 0:
+                _log.info(
+                    "scheduler catch-up: applied=%d skipped=%d errors=%d"
+                    " snapshots_created=%d scored=%d",
+                    result.get("applied", 0), result.get("skipped", 0),
+                    result.get("errors", 0), result.get("snapshots_created", 0),
+                    result.get("scored", 0),
+                )
 
     t = threading.Thread(target=_loop, daemon=True, name="bluegrass-refresh")
     t.start()

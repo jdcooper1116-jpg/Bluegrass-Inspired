@@ -324,8 +324,8 @@ def ui_ledger_session(session: str, request: Request) -> Response:
 def ui_refresh(next: str = Query(default="/")) -> Response:
     if not next.startswith("/"):
         next = "/"
-    from bluegrass.research.catchup import run_catchup
-    counts = run_catchup()
+    from bluegrass.app.forecast_orchestrator import run_catchup_with_ledger
+    counts = run_catchup_with_ledger()
     p, s, e = counts["applied"], counts["skipped"], counts["errors"]
     return RedirectResponse(
         url=f"{next}?synced=1&processed={p}&skipped={s}&errors={e}",
