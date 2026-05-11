@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Bluegrass{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css">
+  <script>
+    (function(){
+      /* Auto-refresh — skip if a sync result is currently showing */
+      if (!new URLSearchParams(location.search).get('synced')) {
+        setTimeout(function(){ location.reload(); }, {{ auto_refresh_seconds | default(60) }} * 1000);
+      }
+    })();
+  </script>
 </head>
 <body>
   <nav>
@@ -15,6 +23,7 @@
     <a href="/session/Night" {% if active == "Night" %}class="active"{% endif %}>Night</a>
     <a href="/plays">Play Builder</a>
     <a href="/integrity">Integrity</a>
+    <span class="refresh-bar">Last refreshed: {{ refresh_ts | default("—") }} · Auto-refresh every {{ auto_refresh_seconds | default(60) }}s</span>
   </nav>
   <div class="page">
     {% block content %}{% endblock %}

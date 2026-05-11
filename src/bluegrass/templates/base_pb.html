@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Play Builder · Bluegrass{% endblock %}</title>
   <link rel="stylesheet" href="/static/pb.css">
+  <script>
+    (function(){
+      /* Auto-refresh — skip if a sync result is currently showing */
+      if (!new URLSearchParams(location.search).get('synced')) {
+        setTimeout(function(){ location.reload(); }, {{ auto_refresh_seconds | default(60) }} * 1000);
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -20,6 +28,7 @@
     </nav>
     <div class="pb-topnav-right">
       {% block topnav_right %}{% endblock %}
+      <span class="pb-refresh-bar">{{ refresh_ts | default("—") }} · {{ auto_refresh_seconds | default(60) }}s refresh</span>
     </div>
   </header>
 

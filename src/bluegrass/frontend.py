@@ -7,6 +7,7 @@ Routes are mounted into the main FastAPI app in api.py.
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,21 @@ _TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
 router = APIRouter()
+
+AUTO_REFRESH_SECONDS: int = 60
+
+
+def _page_context() -> dict[str, Any]:
+    """Common template context injected into every page render.
+
+    refresh_ts  — server-rendered HH:MM UTC timestamp shown in the refresh bar.
+    auto_refresh_seconds — interval passed to the JS timer in both base templates.
+    """
+    now = datetime.now(timezone.utc)
+    return {
+        "refresh_ts": now.strftime("%H:%M UTC"),
+        "auto_refresh_seconds": AUTO_REFRESH_SECONDS,
+    }
 
 
 def _enrich_pair_card(card: dict[str, Any]) -> dict[str, Any]:
@@ -107,6 +123,7 @@ def ui_overview(
     enriched_shortlist = [_enrich_shortlist_entry(e) for e in board.get("consensus_shortlist", [])]
     sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
     return templates.TemplateResponse(request, "overview.html", {
+        **_page_context(),
         "board": board,
         "audit": audit,
         "enriched_shortlist": enriched_shortlist,
@@ -142,6 +159,7 @@ def ui_session(
     enriched_shortlist = [_enrich_shortlist_entry(e) for e in board.get("shortlist", [])]
     sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
     return templates.TemplateResponse(request, "session.html", {
+        **_page_context(),
         "board": board,
         "audit": audit,
         "enriched_pairs": enriched_pairs,
@@ -166,6 +184,7 @@ def pb_overview(
     audit = build_audit_overview()
     sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
     return templates.TemplateResponse(request, "pb_overview.html", {
+        **_page_context(),
         "vm": vm,
         "audit": audit,
         "sync_result": sync_result,
@@ -195,6 +214,7 @@ def pb_session(
     vm = build_play_builder_session(session)
     sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
     return templates.TemplateResponse(request, "pb_session.html", {
+        **_page_context(),
         "vm": vm,
         "sync_result": sync_result,
         "active": session,
@@ -212,6 +232,7 @@ def convergence_overview(
     vm = build_convergence_overview()
     sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
     return templates.TemplateResponse(request, "convergence_overview.html", {
+        **_page_context(),
         "vm": vm,
         "sync_result": sync_result,
         "active": "convergence",
@@ -240,6 +261,7 @@ def convergence_session(
     vm = build_session_convergence(session)
     sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
     return templates.TemplateResponse(request, "convergence_session.html", {
+        **_page_context(),
         "vm": vm,
         "sync_result": sync_result,
         "session": session,
@@ -258,6 +280,7 @@ def ui_integrity(
     vm = build_integrity_view()
     sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
     return templates.TemplateResponse(request, "integrity.html", {
+        **_page_context(),
         "vm": vm,
         "sync_result": sync_result,
         "active": "integrity",
@@ -275,3 +298,4 @@ def ui_refresh(next: str = Query(default="/")) -> Response:
         url=f"{next}?synced=1&processed={p}&skipped={s}&errors={e}",
         status_code=303,
     )
+

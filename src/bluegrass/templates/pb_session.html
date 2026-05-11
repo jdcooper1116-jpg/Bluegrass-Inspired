@@ -170,11 +170,17 @@
 
   {# Sync banner #}
   {% if sync_result %}
-  <div class="pb-sync-banner">
-    <span class="sync-label">Synced</span>
+  <div class="pb-sync-banner{% if sync_result.processed == 0 %} pb-sync-banner-clear{% endif %}">
+    <span class="sync-label">
+      {%- if sync_result.processed > 0 -%}
+        Applied {{ sync_result.processed }} new draw{{ "s" if sync_result.processed != 1 }}
+      {%- else -%}
+        No new draws found
+      {%- endif -%}
+    </span>
     <span class="sync-detail">
-      {{ sync_result.processed }} processed · {{ sync_result.skipped }} skipped
-      {% if sync_result.errors %} · {{ sync_result.errors }} errors{% endif %}
+      {%- if sync_result.skipped > 0 %} · {{ sync_result.skipped }} skipped{% endif %}
+      {%- if sync_result.errors > 0 %} · {{ sync_result.errors }} errors{% endif -%}
     </span>
   </div>
   {% endif %}
