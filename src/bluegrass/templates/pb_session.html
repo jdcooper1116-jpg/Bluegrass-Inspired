@@ -1,0 +1,364 @@
+{% extends "base_pb.html" %}
+
+{% block title %}{{ vm.game_label }} · Play Builder{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Top-right refresh button                                            #}
+{# ------------------------------------------------------------------ #}
+{% block topnav_right %}
+<form method="post" action="/refresh" style="display:inline">
+  <input type="hidden" name="next" value="/plays/session/{{ vm.session }}">
+  <button type="submit" class="btn-pb-refresh">↻ Sync Latest</button>
+</form>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Sidebar freshness summary                                           #}
+{# ------------------------------------------------------------------ #}
+{% block sidebar_freshness %}
+<div class="sb-freshness-row">
+  <span>Status</span>
+  <span class="freshness-badge freshness-{{ vm.audit.freshness_status | replace(' ', '-') }}">
+    {{ vm.audit.freshness_status }}
+  </span>
+</div>
+{% if vm.audit.draws_behind %}
+<div class="sb-freshness-row trust-behind">
+  <span>Behind</span>
+  <span>{{ vm.audit.draws_behind }}d</span>
+</div>
+{% endif %}
+<div class="sb-freshness-row">
+  <span>Coverage</span>
+  <span>{{ vm.audit.coverage }}</span>
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Signal rail                                                         #}
+{# ------------------------------------------------------------------ #}
+{% block rail %}
+
+  {# Due Sums #}
+  <div class="rail-section">
+    <div class="rail-section-label">
+      Due Sums
+      <span class="rail-count">top {{ vm.rail.due_sums | length }}</span>
+    </div>
+    <div class="rail-list">
+      {% for s in vm.rail.due_sums %}
+      <div class="rail-item">
+        <span class="rail-item-rank">#{{ loop.index }}</span>
+        <span class="rail-item-value">{{ s.value }}</span>
+        <span class="rail-item-ds">{{ s.draws_since }}d</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Due Root Sums #}
+  <div class="rail-section">
+    <div class="rail-section-label">
+      Due Root Sums
+      <span class="rail-count">top {{ vm.rail.due_root_sums | length }}</span>
+    </div>
+    <div class="rail-list">
+      {% for r in vm.rail.due_root_sums %}
+      <div class="rail-item">
+        <span class="rail-item-rank">#{{ loop.index }}</span>
+        <span class="rail-item-value">{{ r.value }}</span>
+        <span class="rail-item-ds">{{ r.draws_since }}d</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Due Pairs by subtype #}
+  <div class="rail-section">
+    <div class="rail-section-label">Due Pairs</div>
+    {% for subtype, pairs in vm.rail.due_pairs.items() %}
+    {% if pairs %}
+    <div class="rail-subtype-group">
+      <div class="rail-subtype-label">{{ subtype.replace('_', ' ').title() }}</div>
+      <div class="rail-list">
+        {% for p in pairs %}
+        <div class="rail-item">
+          <span class="rail-item-rank">#{{ loop.index }}</span>
+          <span class="rail-item-value">{{ p.value }}</span>
+          <span class="rail-item-ds">{{ p.draws_since }}d</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  {# Due Straight Combos #}
+  {% if vm.rail.due_straight_combos %}
+  <div class="rail-section">
+    <div class="rail-section-label rail-label-straight">
+      Due Straight
+      <span class="rail-count">top {{ vm.rail.due_straight_combos | length }}</span>
+    </div>
+    <div class="rail-list">
+      {% for p in vm.rail.due_straight_combos %}
+      <div class="rail-item">
+        <span class="rail-item-rank">#{{ loop.index }}</span>
+        <span class="rail-item-value">{{ p.value }}</span>
+        <span class="rail-item-ds">{{ p.draws_since }}d</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Due Box Combos #}
+  {% if vm.rail.due_box_combos %}
+  <div class="rail-section">
+    <div class="rail-section-label rail-label-box">
+      Due Box
+      <span class="rail-count">top {{ vm.rail.due_box_combos | length }}</span>
+    </div>
+    <div class="rail-list">
+      {% for p in vm.rail.due_box_combos %}
+      <div class="rail-item">
+        <span class="rail-item-rank">#{{ loop.index }}</span>
+        <span class="rail-item-value">{{ p.value }}</span>
+        <span class="rail-item-ds">{{ p.draws_since }}d</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Number Pattern #}
+  <div class="rail-section">
+    <div class="rail-section-label">Number Pattern</div>
+    {% if vm.rail.pattern_singles %}
+    <div class="rail-subtype-label">Singles (unique digits)</div>
+    <div class="rail-pattern-row">
+      {% for s in vm.rail.pattern_singles %}
+      <span class="rail-pattern-chip">{{ s.value }}<span class="pds">{{ s.draws_since }}d</span></span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if vm.rail.pattern_doubles %}
+    <div class="rail-subtype-label" style="margin-top:5px">Doubles (one pair)</div>
+    <div class="rail-pattern-row">
+      {% for d in vm.rail.pattern_doubles %}
+      <span class="rail-pattern-chip">{{ d.value }}<span class="pds">{{ d.draws_since }}d</span></span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if vm.rail.pattern_triples %}
+    <div class="rail-subtype-label" style="margin-top:5px">Triples (all same)</div>
+    <div class="rail-pattern-row">
+      {% for t in vm.rail.pattern_triples %}
+      <span class="rail-pattern-chip">{{ t.value }}<span class="pds">{{ t.draws_since }}d</span></span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Main content                                                        #}
+{# ------------------------------------------------------------------ #}
+{% block content %}
+
+  {# Sync banner #}
+  {% if sync_result %}
+  <div class="pb-sync-banner">
+    <span class="sync-label">Synced</span>
+    <span class="sync-detail">
+      {{ sync_result.processed }} processed · {{ sync_result.skipped }} skipped
+      {% if sync_result.errors %} · {{ sync_result.errors }} errors{% endif %}
+    </span>
+  </div>
+  {% endif %}
+
+  {# Page header #}
+  <div class="pb-page-header">
+    <h1 class="pb-page-title">{{ vm.game_label }}</h1>
+    <span class="pb-page-sub">{{ vm.metadata.last_processed_draw }}</span>
+  </div>
+
+  {# Trust strip #}
+  <div class="pb-trust-strip">
+    <span class="trust-field">
+      Freshness:&nbsp;
+      <span class="freshness-badge freshness-{{ vm.audit.freshness_status | replace(' ', '-') }}">
+        {{ vm.audit.freshness_status }}
+      </span>
+    </span>
+    <span class="trust-sep">·</span>
+    <span class="trust-field">Coverage: <code>{{ vm.audit.coverage }}</code></span>
+    {% if vm.audit.draws_behind %}
+    <span class="trust-sep">·</span>
+    <span class="trust-behind">{{ vm.audit.draws_behind }} draw(s) behind</span>
+    {% endif %}
+    {% if vm.audit.gap_detected %}
+    <span class="trust-sep">·</span>
+    <span class="trust-warn">Gap detected</span>
+    {% endif %}
+    <span class="trust-sep">·</span>
+    <span class="trust-field">Last draw: <code>{{ vm.metadata.last_processed_draw }}</code></span>
+  </div>
+
+  {# ---- Suggested Plays ---- #}
+  <div class="pb-section-title">
+    Suggested Plays
+    <span class="count-badge">{{ vm.plays.total }} candidates</span>
+  </div>
+
+  {# Tier 1 #}
+  {% if vm.plays.tier_1 %}
+  <div class="tier-section">
+    <div class="tier-label tier-label-1">
+      ★ Tier 1 — Highest Convergence
+      <span class="count-badge" style="margin-left:6px">{{ vm.plays.tier_1_count }}</span>
+    </div>
+    <div class="tier-grid">
+      {% for card in vm.plays.tier_1 %}
+      <div class="play-card tier-1">
+        <div class="play-card-number">{{ card.number }}</div>
+        <div class="play-card-confidence">{{ card.confidence_label }}</div>
+        <div class="play-card-desc">{{ card.confidence_desc }}</div>
+        <div class="play-card-rationale" title="{{ card.human_rationale }}">{{ card.human_rationale }}</div>
+        <div class="play-card-chips">
+          <span class="chip chip-{{ card.play_type }}">{{ card.play_type }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Tier 2 #}
+  {% if vm.plays.tier_2 %}
+  <div class="tier-section">
+    <div class="tier-label tier-label-2">
+      ◆ Tier 2 — Strong Signals
+      <span class="count-badge" style="margin-left:6px">{{ vm.plays.tier_2_count }}</span>
+    </div>
+    <div class="tier-grid">
+      {% for card in vm.plays.tier_2 %}
+      <div class="play-card tier-2">
+        <div class="play-card-number">{{ card.number }}</div>
+        <div class="play-card-confidence">{{ card.confidence_label }}</div>
+        <div class="play-card-desc">{{ card.confidence_desc }}</div>
+        <div class="play-card-rationale" title="{{ card.human_rationale }}">{{ card.human_rationale }}</div>
+        <div class="play-card-chips">
+          <span class="chip chip-{{ card.play_type }}">{{ card.play_type }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Tier 3 #}
+  {% if vm.plays.tier_3 %}
+  <div class="tier-section">
+    <div class="tier-label tier-label-3">
+      · Tier 3 — Moderate Signals
+      <span class="count-badge" style="margin-left:6px">{{ vm.plays.tier_3_count }}</span>
+    </div>
+    <div class="tier-grid">
+      {% for card in vm.plays.tier_3 %}
+      <div class="play-card tier-3">
+        <div class="play-card-number">{{ card.number }}</div>
+        <div class="play-card-confidence">{{ card.confidence_label }}</div>
+        <div class="play-card-desc">{{ card.confidence_desc }}</div>
+        <div class="play-card-rationale" title="{{ card.human_rationale }}">{{ card.human_rationale }}</div>
+        <div class="play-card-chips">
+          <span class="chip chip-{{ card.play_type }}">{{ card.play_type }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <hr class="pb-section-divider">
+
+  {# ---- Straight + Box Plays ---- #}
+  <div class="pb-section-title">
+    Play Lists
+    <span class="count-badge" style="font-weight:400;letter-spacing:0;text-transform:none">top 10 each · <span style="color:var(--amber)">Nd</span> = draws since last hit</span>
+  </div>
+  <div class="pb-play-2col">
+
+    {# Straight Plays #}
+    <div class="play-list-card">
+      <div class="play-list-title straight-title">Straight Plays</div>
+      <div class="play-list">
+        {% for p in vm.straight_plays %}
+        <div class="play-list-row">
+          <span class="play-list-rank">#{{ loop.index }}</span>
+          <span class="play-list-value">{{ p.value }}</span>
+          <span class="play-list-ds">{{ p.draws_since }}d</span>
+        </div>
+        {% endfor %}
+        {% if not vm.straight_plays %}
+        <div style="color:var(--muted);font-size:10px;padding:4px">No straight plays</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Box Plays #}
+    <div class="play-list-card">
+      <div class="play-list-title box-title">Box Plays</div>
+      <div class="play-list">
+        {% for p in vm.box_plays %}
+        <div class="play-list-row">
+          <span class="play-list-rank">#{{ loop.index }}</span>
+          <span class="play-list-value">{{ p.value }}</span>
+          <span class="play-list-ds">{{ p.draws_since }}d</span>
+        </div>
+        {% endfor %}
+        {% if not vm.box_plays %}
+        <div style="color:var(--muted);font-size:10px;padding:4px">No box plays</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="pb-section-divider">
+
+  {# ---- Pair Families ---- #}
+  {% if vm.pair_families %}
+  <div class="pb-family-strip">
+    <div class="pb-section-title">Pair Families</div>
+    <div class="family-row">
+      {% for fam in vm.pair_families %}
+      <div class="family-chip">
+        <span class="fam-val">{{ fam.pair }}</span>
+        <span class="fam-pos">{{ fam.position_label }}</span>
+        <span class="fam-ds">{{ fam.draws_since }}d</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ---- Box Families ---- #}
+  {% if vm.box_families %}
+  <div class="pb-family-strip">
+    <div class="pb-section-title">Box Families</div>
+    <div class="family-row">
+      {% for fam in vm.box_families %}
+      <div class="family-chip">
+        <span class="fam-val">{{ fam.family }}</span>
+        <span class="fam-pos">ex. {{ fam.example }}</span>
+        <span class="fam-ds">{{ fam.draws_since }}d</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+{% endblock %}

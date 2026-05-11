@@ -21,6 +21,7 @@ from bluegrass.app.board import build_session_board
 from bluegrass.app.classify import classify_digit_pattern, classify_pair, classify_play_type
 from bluegrass.app.convergence import build_convergence_overview, build_session_convergence
 from bluegrass.app.overview import build_all_draws_overview
+from bluegrass.app.play_builder import build_play_builder_overview, build_play_builder_session
 from bluegrass.app.playlist import _VALID_SESSIONS
 from bluegrass.engine.client import EngineClientError, fetch_latest_results
 from bluegrass.engine.intake import normalize_result
@@ -193,6 +194,51 @@ def ui_convergence_session(session: str, request: Request) -> Response:
         "audit":   audit,
         "session": session,
         "active":  f"conv_{session}",
+    })
+
+
+
+@router.get("/plays", response_class=HTMLResponse, include_in_schema=False)
+def pb_overview(
+    request: Request,
+    synced: int = 0,
+    processed: int = 0,
+    skipped: int = 0,
+    errors: int = 0,
+) -> Response:
+    vm = build_play_builder_overview()
+    audit = build_audit_overview()
+    sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
+    return templates.TemplateResponse(request, "pb_overview.html", {
+        "vm": vm,
+        "audit": audit,
+        "sync_result": sync_result,
+        "active": "overview",
+    })
+
+
+@router.get("/plays/session/{session}", response_class=HTMLResponse, include_in_schema=False)
+def pb_session(
+    session: str,
+    request: Request,
+    synced: int = 0,
+    processed: int = 0,
+    skipped: int = 0,
+    errors: int = 0,
+) -> Response:
+    if session not in _VALID_SESSIONS:
+        return templates.TemplateResponse(
+            request, "404.html",
+            {"active": None,
+             "detail": f"Session {session!r} not found. Valid: Midday, Evening, Night."},
+            status_code=404,
+        )
+    vm = build_play_builder_session(session)
+    sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
+    return templates.TemplateResponse(request, "pb_session.html", {
+        "vm": vm,
+        "sync_result": sync_result,
+        "active": session,
     })
 
 

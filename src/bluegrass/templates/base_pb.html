@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Play Builder · Bluegrass{% endblock %}</title>
+  <link rel="stylesheet" href="/static/pb.css">
+</head>
+<body>
+
+  <!-- Top nav -->
+  <header class="pb-topnav">
+    <a class="pb-brand" href="/plays">Bluegrass <span>/ Play Builder</span></a>
+    <nav class="pb-topnav-links">
+      <a href="/plays" {% if active == "overview" %}class="active"{% endif %}>Dashboard</a>
+      <a href="/plays/session/Midday"  {% if active == "Midday"  %}class="active"{% endif %}>Midday</a>
+      <a href="/plays/session/Evening" {% if active == "Evening" %}class="active"{% endif %}>Evening</a>
+      <a href="/plays/session/Night"   {% if active == "Night"   %}class="active"{% endif %}>Night</a>
+    </nav>
+    <div class="pb-topnav-right">
+      {% block topnav_right %}{% endblock %}
+    </div>
+  </header>
+
+  <div class="pb-shell">
+
+    <!-- Sidebar -->
+    <aside class="pb-sidebar">
+      <div>
+        <div class="sb-section-label">Sessions</div>
+        <nav class="sb-nav">
+          <a href="/plays" {% if active == "overview" %}class="active"{% endif %}>
+            <span class="sb-dot"></span>Dashboard
+          </a>
+          <a href="/plays/session/Midday" {% if active == "Midday" %}class="active"{% endif %}>
+            <span class="sb-dot"></span>Midday
+          </a>
+          <a href="/plays/session/Evening" {% if active == "Evening" %}class="active"{% endif %}>
+            <span class="sb-dot"></span>Evening
+          </a>
+          <a href="/plays/session/Night" {% if active == "Night" %}class="active"{% endif %}>
+            <span class="sb-dot"></span>Night
+          </a>
+        </nav>
+      </div>
+
+      <div>
+        <div class="sb-section-label">Data</div>
+        <nav class="sb-nav">
+          <a href="/">Stats View</a>
+        </nav>
+      </div>
+
+      {% block sidebar_extra %}{% endblock %}
+
+      <div class="sb-freshness">
+        {% block sidebar_freshness %}{% endblock %}
+      </div>
+    </aside>
+
+    <!-- Signal rail -->
+    <aside class="pb-rail">
+      {% block rail %}{% endblock %}
+    </aside>
+
+    <!-- Main content -->
+    <main class="pb-main">
+      {% block content %}{% endblock %}
+    </main>
+
+  </div>
+
+</body>
+</html>

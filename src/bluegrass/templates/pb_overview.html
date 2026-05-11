@@ -1,0 +1,147 @@
+{% extends "base_pb.html" %}
+
+{% block title %}Play Builder Dashboard · Bluegrass{% endblock %}
+
+{% block topnav_right %}
+<form method="post" action="/refresh" style="display:inline">
+  <input type="hidden" name="next" value="/plays">
+  <button type="submit" class="btn-pb-refresh">↻ Sync Latest</button>
+</form>
+{% endblock %}
+
+{% block sidebar_freshness %}
+{% for sess, sa in vm.audit.sessions.items() %}
+<div class="sb-freshness-row">
+  <span>{{ sess }}</span>
+  <span class="freshness-badge freshness-{{ sa.freshness_status | replace(' ', '-') }}">
+    {{ sa.freshness_status }}
+  </span>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block rail %}
+{# Overview rail: show top signal values from all sessions #}
+{% for sess, card in vm.session_cards.items() %}
+<div class="rail-section">
+  <div class="rail-section-label">{{ sess }}</div>
+  {% if card.top_sum %}
+  <div class="rail-item" style="margin-bottom:3px">
+    <span class="rail-item-value">Sum {{ card.top_sum.value }}</span>
+    <span class="rail-item-ds">{{ card.top_sum.draws_since }}d</span>
+  </div>
+  {% endif %}
+  {% if card.top_root %}
+  <div class="rail-item">
+    <span class="rail-item-value">Root {{ card.top_root.value }}</span>
+    <span class="rail-item-ds">{{ card.top_root.draws_since }}d</span>
+  </div>
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block content %}
+
+  {# Sync banner #}
+  {% if sync_result %}
+  <div class="pb-sync-banner">
+    <span class="sync-label">Synced</span>
+    <span class="sync-detail">
+      {{ sync_result.processed }} processed · {{ sync_result.skipped }} skipped
+      {% if sync_result.errors %} · {{ sync_result.errors }} errors{% endif %}
+    </span>
+  </div>
+  {% endif %}
+
+  {# Page header #}
+  <div class="pb-page-header">
+    <h1 class="pb-page-title">Play Builder Dashboard</h1>
+    <span class="pb-page-sub">{{ vm.metadata.generated_at[:10] if vm.metadata.generated_at else '' }}</span>
+  </div>
+
+  {# ---- Session cards ---- #}
+  <div class="pb-section-title">Sessions</div>
+  <div class="pb-overview-grid">
+    {% for sess, card in vm.session_cards.items() %}
+    <div class="ov-session-card">
+      <div class="ov-card-header">
+        <a class="ov-card-title" href="/plays/session/{{ sess }}">{{ card.game_label }}</a>
+        <span class="freshness-badge freshness-{{ card.freshness_status | replace(' ', '-') }}">
+          {{ card.freshness_status }}
+        </span>
+      </div>
+
+      <div class="ov-card-meta">
+        <span>Last: {{ card.last_processed_draw }}</span>
+        {% if card.draws_behind %}
+        <span class="trust-behind">{{ card.draws_behind }}d behind</span>
+        {% endif %}
+        <span>{{ card.coverage }}</span>
+      </div>
+
+      <div class="ov-tier-row">
+        <div class="ov-tier-item t1">
+          <span class="tc">{{ card.tier_1_count }}</span>
+          <span class="tl">T1</span>
+        </div>
+        <div class="ov-tier-item t2">
+          <span class="tc">{{ card.tier_2_count }}</span>
+          <span class="tl">T2</span>
+        </div>
+        <div class="ov-tier-item t3">
+          <span class="tc">{{ card.tier_3_count }}</span>
+          <span class="tl">T3</span>
+        </div>
+        <div class="ov-tier-item" style="margin-left:auto">
+          <span class="tl">{{ card.total_candidates }} plays</span>
+        </div>
+      </div>
+
+      <div class="ov-mini-candidates">
+        {% for c in card.top_candidates %}
+        <span class="ov-mini-chip tier-{{ c.tier }}" title="{{ c.human_rationale }}">{{ c.number }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <hr class="pb-section-divider">
+
+  {# ---- Multi-session overlap ---- #}
+  {% if vm.multi_session %}
+  <div class="pb-section-title">
+    Multi-Session Convergence
+    <span class="count-badge">{{ vm.multi_session | length }}</span>
+  </div>
+  <div class="pb-overlap-list">
+    {% for c in vm.multi_session %}
+    <div class="pb-overlap-chip">
+      <span class="chip-num">{{ c.number }}</span>
+      <span class="chip-sess">{{ c.sessions | join(' · ') }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <hr class="pb-section-divider">
+  {% endif %}
+
+  {# ---- Overview-supported plays ---- #}
+  {% if vm.overview_supported %}
+  <div class="pb-section-title">
+    Overview-Supported Plays
+    <span class="count-badge">{{ vm.overview_supported | length }}</span>
+  </div>
+  <div class="pb-overlap-list">
+    {% for c in vm.overview_supported %}
+    <div class="pb-overlap-chip">
+      <span class="chip-num">{{ c.number }}</span>
+      {% if c.sessions is defined %}
+      <span class="chip-sess">{{ c.sessions | join(' · ') }}</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+{% endblock %}
