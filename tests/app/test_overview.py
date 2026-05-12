@@ -217,6 +217,6 @@ def test_metadata_has_standard_fields() -> None:
     ov = build_all_draws_overview()
     meta = ov["metadata"]
     assert meta["source"] == "engine-runtime"
-    assert meta["analysis_window_days"] == 250
+    assert meta["analysis_window_days"] == 540
     assert meta["sync_window_days"] == 30
     assert "generated_at" in meta

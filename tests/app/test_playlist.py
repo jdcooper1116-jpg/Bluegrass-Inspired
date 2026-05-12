@@ -98,7 +98,7 @@ def test_session_stats_includes_metadata() -> None:
     assert "metadata" in stats
     assert stats["metadata"]["session"] == "Night"
     assert stats["metadata"]["source"] == "engine-runtime"
-    assert stats["metadata"]["analysis_window_days"] == 250
+    assert stats["metadata"]["analysis_window_days"] == 540
     assert stats["metadata"]["sync_window_days"] == 30
     assert "last_processed_draw" in stats["metadata"]
 

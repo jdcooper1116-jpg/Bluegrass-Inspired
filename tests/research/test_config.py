@@ -8,7 +8,7 @@ def test_sync_window_is_30() -> None:
 
 
 def test_analysis_window_is_250() -> None:
-    assert ANALYSIS_WINDOW_DAYS == 250
+    assert ANALYSIS_WINDOW_DAYS == 540
 
 
 def test_analysis_window_greater_than_sync_window() -> None:

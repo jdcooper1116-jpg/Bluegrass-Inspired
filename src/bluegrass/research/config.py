@@ -20,4 +20,4 @@ ANALYSIS_WINDOW_DAYS
 from __future__ import annotations
 
 SYNC_WINDOW_DAYS: int = 30
-ANALYSIS_WINDOW_DAYS: int = 250
+ANALYSIS_WINDOW_DAYS: int = 540
