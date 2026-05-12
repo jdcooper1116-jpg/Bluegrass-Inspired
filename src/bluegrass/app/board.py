@@ -13,6 +13,15 @@ from typing import Any
 from bluegrass.app.playlist import _VALID_SESSIONS, _last_processed_draw
 from bluegrass.app.watchlist import get_watchlist
 from bluegrass.research.config import ANALYSIS_WINDOW_DAYS, SYNC_WINDOW_DAYS
+from bluegrass.research.stats_engine import (
+    PAIR_EXPECTED_GAP,
+    PAIR_QUANT,
+    ROOT_MAX_QUANT,
+    SUM_MAX_QUANT,
+    composite_score,
+    compute_deviation_metrics,
+    describe_deviation,
+)
 from bluegrass.research.sums import build_root_sums_board, build_sums_board
 
 _SECTION_SIZE = 4   # cards shown per family section
@@ -54,34 +63,42 @@ def _family_max_ds(rows: list[dict[str, Any]]) -> float:
     return max(vals, default=1.0) or 1.0
 
 
-def _score_sum(row: dict[str, Any], max_ds: float) -> float:
-    try:
-        ds = float(row["draws_since"])
-    except (TypeError, ValueError):
-        ds = 0.0
-    return round(ds / max_ds, 6)
+def _score_sum(row: dict[str, Any], max_ds: float) -> float:  # max_ds kept for API compat
+    """Composite score for sums/root_sums: gap_ratio * mild structural weight.
+
+    Uses gap_ratio pre-computed on the row (by _build_board in sums.py).
+    Structural weight (quant/max_quant)^0.25 mildly favors common values:
+    sum 13 (quant=75) overdue by 3x expected outranks sum 0 (quant=1) that
+    has barely passed its expected gap.
+    """
+    quant     = row.get("combo_count", 1) or 1
+    gr        = row.get("gap_ratio", 0.0)
+    family    = row.get("family", "sum")
+    mq        = SUM_MAX_QUANT if family == "sum" else ROOT_MAX_QUANT
+    pw        = (quant / mq) ** 0.25
+    return round(gr * pw, 6)
 
 
 def _score_pair(row: dict[str, Any], max_ds: float) -> float:
-    try:
-        ds = float(row.get("draws_since", 0) or 0)
-    except (TypeError, ValueError):
-        ds = 0.0
-    overdue = ds / max_ds
+    """Composite score for pairs: gap_ratio weighted by structural probability.
 
-    try:
-        times = float(row.get("times_drawn") or 0)
-        expected = float(row.get("expected_times") or 0)
-        below_exp = max(0.0, (expected - times) / expected) if expected > 0 else 0.0
-    except (TypeError, ValueError):
-        below_exp = 0.0
+    All pair values have PAIR_QUANT=10, PAIR_EXPECTED_GAP=100.
+    The gap_ratio field may not be present on watchlist pair rows, so it is
+    computed inline when absent.
+    """
+    ds = float(row.get("draws_since") or 0)
+    # Use pre-computed gap_ratio if available (enriched rows from sums.py)
+    gr = row.get("gap_ratio")
+    if gr is None:
+        gr = ds / PAIR_EXPECTED_GAP
 
+    # Supplement with baseline priority signal if available
     try:
         priority = min(float(row.get("baseline_priority_score") or 0) / 25.0, 1.0)
     except (TypeError, ValueError):
         priority = 0.0
 
-    return round(0.50 * overdue + 0.35 * below_exp + 0.15 * priority, 6)
+    return round(0.75 * gr + 0.25 * priority, 6)
 
 
 def _score_combo(row: dict[str, Any], max_ds: float) -> float:
@@ -156,23 +173,36 @@ def _build_board_shortlist(
 
 def _make_shortlist_entry(row: dict[str, Any], family: str, session: str) -> dict[str, Any]:
     if family in ("sum", "root_sum"):
+        why = row.get("why_flagged") or (
+            f"{family.replace('_', ' ')} {row['value']} overdue – "
+            f"{row['draws_since']} draws since last seen"
+        )
         return {
-            "family": family,
-            "value": row["value"],
-            "draws_since": row["draws_since"],
-            "last_seen": row.get("last_seen", ""),
-            "why_flagged": f"{family.replace('_', ' ')} {row['value']} overdue – {row['draws_since']} draws since last seen",
-            "subtype": None,
-            "session": session,
+            "family":               family,
+            "value":                row["value"],
+            "draws_since":          row["draws_since"],
+            "last_seen":            row.get("last_seen", ""),
+            "why_flagged":          why,
+            "subtype":              None,
+            "session":              session,
+            # Explainability fields for UI and debugging
+            "gap_ratio":            row.get("gap_ratio"),
+            "severity_band":        row.get("severity_band"),
+            "multi_window_agreement": row.get("multi_window_agreement"),
+            "expected_gap_draws":   row.get("expected_gap_draws"),
+            "combo_count":          row.get("combo_count"),
         }
     return {
-        "family": family,
-        "value": row.get("value", ""),
-        "draws_since": row.get("draws_since", ""),
-        "last_seen": row.get("last_seen", ""),
-        "why_flagged": row.get("why_flagged", ""),
-        "subtype": row.get("subtype"),
-        "session": session,
+        "family":               family,
+        "value":                row.get("value", ""),
+        "draws_since":          row.get("draws_since", ""),
+        "last_seen":            row.get("last_seen", ""),
+        "why_flagged":          row.get("why_flagged", ""),
+        "subtype":              row.get("subtype"),
+        "session":              session,
+        "gap_ratio":            row.get("gap_ratio"),
+        "severity_band":        row.get("severity_band"),
+        "multi_window_agreement": row.get("multi_window_agreement"),
     }
 
 

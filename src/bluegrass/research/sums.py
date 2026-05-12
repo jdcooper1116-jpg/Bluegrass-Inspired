@@ -21,6 +21,12 @@ from __future__ import annotations
 from typing import Any
 
 from bluegrass.research.config import ANALYSIS_WINDOW_DAYS
+from bluegrass.research.stats_engine import (
+    SUM_MAX_QUANT,
+    ROOT_MAX_QUANT,
+    compute_deviation_metrics,
+    describe_deviation,
+)
 from bluegrass.research.stats_store import load_stats_state
 
 
@@ -78,21 +84,20 @@ def _build_board(
     quant_table: dict[int, int],
     session: str,
     analysis_window_days: int,
+    max_quant_in_family: int,
 ) -> list[dict[str, Any]]:
     """Build an overdue board from engine-runtime state only.
 
-    state_key       — key used to look up the family dict in stats_state
-                      (e.g. "sums", "root_sums")
-    display_family  — the family label written into every returned row
-                      (e.g. "sum", "root_sum") — must match the contract
-                      expected by board.py and the test suite
+    state_key            — key used to look up the family dict in stats_state
+    display_family       — family label written into every returned row
+    quant_table          — canonical combo-count-per-1000 for each value
+    max_quant_in_family  — maximum quant in this family (for composite scoring)
 
-    For each value in quant_table:
-    - If present in runtime: use runtime draws_since / last_seen / times_drawn.
-    - If absent from runtime: draws_since = draws_processed (honest lower bound).
-      The value has not appeared in any of the N processed draws.
+    Deviation metrics are computed from (draws_since, times_drawn,
+    draws_processed, quant) and merged into each row so that callers can
+    use gap_ratio and severity_band directly for scoring and display.
 
-    Never reads baseline CSVs. draws_since is always engine-verified.
+    All values are engine-verified.  No baseline CSVs are read here.
     """
     state = load_stats_state()
     session_state = state.get("by_session", {}).get(session, {})
@@ -105,23 +110,46 @@ def _build_board(
         entry = runtime_family.get(key_str)
         if entry is not None:
             draws_since = entry.get("draws_since", draws_processed)
-            last_seen = entry.get("last_seen", "")
+            last_seen   = entry.get("last_seen", "")
             times_drawn = entry.get("times_seen_runtime", 0)
         else:
             draws_since = draws_processed
-            last_seen = ""
+            last_seen   = ""
             times_drawn = 0
 
+        dev = compute_deviation_metrics(draws_since, times_drawn, draws_processed, quant)
+        why = describe_deviation(
+            str(value), display_family, draws_since, quant,
+            dev["severity_band"], dev["gap_ratio"], dev["multi_window_agreement"],
+        )
+
         rows.append({
-            "family": display_family,
-            "value": key_str,
-            "draws_since": draws_since,
-            "last_seen": last_seen,
-            "times_drawn": times_drawn,
-            "combo_count": quant,
-            "expected_gap_draws": expected_gap(quant),
-            "session": session,
+            # Core identity
+            "family":              display_family,
+            "value":               key_str,
+            "session":             session,
+            # Overdue tracking (engine-verified)
+            "draws_since":         draws_since,
+            "last_seen":           last_seen,
+            "times_drawn":         times_drawn,
+            "draws_processed":     draws_processed,
+            # Combinatoric
+            "combo_count":         quant,
+            "expected_gap_draws":  dev["expected_gap_draws"],
+            # Deviation metrics
+            "expected_hits":       dev["expected_hits"],
+            "observed_hits":       dev["observed_hits"],
+            "gap_ratio":           dev["gap_ratio"],
+            "gap_zscore":          dev["gap_zscore"],
+            "severity_band":       dev["severity_band"],
+            # Multi-window flags
+            "short_term_cold":     dev["short_term_cold"],
+            "medium_term_cold":    dev["medium_term_cold"],
+            "long_term_cold":      dev["long_term_cold"],
+            "multi_window_agreement": dev["multi_window_agreement"],
+            # Metadata
             "analysis_window_days": analysis_window_days,
+            "why_flagged":         why,
         })
 
     rows.sort(key=lambda r: r["draws_since"], reverse=True)
@@ -140,13 +168,17 @@ def build_sums_board(
 ) -> list[dict[str, Any]]:
     """All digit-sum groups for a session, sorted most-overdue first.
 
-    Each entry: family="sum", value (str), draws_since, last_seen, times_drawn,
-    combo_count, expected_gap_draws, session, analysis_window_days.
+    Each row includes gap_ratio, severity_band, multi_window_agreement and
+    other deviation metrics so callers can use them directly for scoring and
+    display without recomputing from raw values.
 
     draws_since is engine-runtime only. Values never seen in runtime show
     draws_since == session draws_processed (honest lower bound).
     """
-    rows = _build_board("sums", "sum", SUM_STRAIGHT_QUANT, session, analysis_window_days)
+    rows = _build_board(
+        "sums", "sum", SUM_STRAIGHT_QUANT, session, analysis_window_days,
+        max_quant_in_family=SUM_MAX_QUANT,
+    )
     return rows[:limit] if limit is not None else rows
 
 
@@ -158,8 +190,10 @@ def build_root_sums_board(
 ) -> list[dict[str, Any]]:
     """All root-sum groups for a session, sorted most-overdue first.
 
-    Each entry: family="root_sum". draws_since is engine-runtime only.
-    Values never seen in runtime show draws_since == session draws_processed.
+    Includes deviation metrics. draws_since is engine-runtime only.
     """
-    rows = _build_board("root_sums", "root_sum", ROOT_STRAIGHT_QUANT, session, analysis_window_days)
+    rows = _build_board(
+        "root_sums", "root_sum", ROOT_STRAIGHT_QUANT, session, analysis_window_days,
+        max_quant_in_family=ROOT_MAX_QUANT,
+    )
     return rows[:limit] if limit is not None else rows
