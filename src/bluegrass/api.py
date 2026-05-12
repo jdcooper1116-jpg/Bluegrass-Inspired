@@ -198,12 +198,22 @@ def refresh_rebuild_runtime() -> dict[str, object]:
     - draws_behind > SYNC_WINDOW_DAYS (sync window too small to reach the gap)
     - State is suspected of inconsistency after overlapping bootstrap runs
 
-    Clears stats_state.json and replays ANALYSIS_WINDOW_DAYS ({window}d) of
-    draws in strict chronological order.
+    Clears stats_state.json and replays ANALYSIS_WINDOW_DAYS draws.
     Does NOT touch baseline seed CSVs or forecast ledger files.
-    """.format(window=ANALYSIS_WINDOW_DAYS)
+
+    Returns 409 if a rebuild is already running.
+    """
+    from fastapi.responses import JSONResponse
     from bluegrass.research.rebuild import rebuild_runtime_state
     result = rebuild_runtime_state()
+    if result.get("already_running"):
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": result["error_detail"],
+                "already_running": True,
+            },
+        )
     return {
         "cleared": result["cleared"],
         "days": result["days"],

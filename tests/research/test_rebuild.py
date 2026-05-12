@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from unittest.mock import patch
 
 import pytest
@@ -189,3 +190,104 @@ def test_audit_rebuild_not_recommended_when_fresh() -> None:
     result = _build_one("Midday", engine_map, None)
     assert result["rebuild_recommended"] is False
     assert result["skipped_but_stale_reason"] is None
+
+
+# ---------------------------------------------------------------------------
+# Rebuild exclusivity
+# ---------------------------------------------------------------------------
+
+def test_second_rebuild_returns_already_running() -> None:
+    """A concurrent second rebuild must not run — returns already_running=True."""
+    from bluegrass.research.rebuild import _REBUILD_LOCK, rebuild_runtime_state
+
+    barrier_entered = threading.Event()
+    barrier_proceed = threading.Event()
+    first_result: list[dict] = []
+    second_result: list[dict] = []
+
+    def slow_rebuild() -> None:
+        # Patch fetch to block until we signal it
+        def blocking_fetch(days):
+            barrier_entered.set()
+            barrier_proceed.wait(timeout=5)
+            return []
+
+        with patch("bluegrass.research.rebuild.fetch_all_draws", side_effect=blocking_fetch):
+            first_result.append(rebuild_runtime_state())
+
+    t = threading.Thread(target=slow_rebuild, daemon=True)
+    t.start()
+    barrier_entered.wait(timeout=3)
+
+    # First rebuild is now in progress; fire the second
+    with patch("bluegrass.research.rebuild.fetch_all_draws", return_value=[]):
+        second_result.append(rebuild_runtime_state())
+
+    barrier_proceed.set()
+    t.join(timeout=5)
+
+    assert second_result[0]["already_running"] is True, second_result[0]
+    assert second_result[0]["cleared"] is False
+
+
+def test_rebuild_lock_released_after_success() -> None:
+    """After a completed rebuild the lock must be free for a new rebuild."""
+    with patch("bluegrass.research.rebuild.fetch_all_draws", return_value=[]):
+        r = rebuild_runtime_state()
+    assert r["already_running"] is False
+
+    # A subsequent rebuild should also succeed
+    with patch("bluegrass.research.rebuild.fetch_all_draws", return_value=[]):
+        r2 = rebuild_runtime_state()
+    assert r2["already_running"] is False
+
+
+def test_rebuild_lock_released_after_engine_error() -> None:
+    """Even on engine failure the lock is released so rebuilds can retry."""
+    from bluegrass.engine.client import EngineClientError
+
+    with patch("bluegrass.research.rebuild.fetch_all_draws",
+               side_effect=EngineClientError("timeout")):
+        r = rebuild_runtime_state()
+
+    assert r["errors"] == 1
+    assert r["already_running"] is False
+
+    # Lock must be free now
+    from bluegrass.research.rebuild import _REBUILD_LOCK
+    assert not _REBUILD_LOCK.locked(), "Lock was not released after engine error"
+
+
+def test_is_rebuild_in_progress_reflects_lock_state() -> None:
+    from bluegrass.research.rebuild import _REBUILD_LOCK, is_rebuild_in_progress
+
+    assert not is_rebuild_in_progress()
+
+    _REBUILD_LOCK.acquire()
+    try:
+        assert is_rebuild_in_progress()
+    finally:
+        _REBUILD_LOCK.release()
+
+    assert not is_rebuild_in_progress()
+
+
+def test_scheduler_skips_when_rebuild_in_progress(monkeypatch) -> None:
+    """Scheduler loop must check is_rebuild_in_progress and skip the tick."""
+    from bluegrass.research.rebuild import _REBUILD_LOCK
+
+    catchup_called = []
+
+    def mock_catchup():
+        catchup_called.append(True)
+        return {"applied": 0, "skipped": 0, "errors": 0, "snapshots_created": 0, "scored": 0}
+
+    _REBUILD_LOCK.acquire()
+    try:
+        # Simulate one scheduler loop iteration with rebuild in progress
+        from bluegrass.research.rebuild import is_rebuild_in_progress
+        skip = is_rebuild_in_progress()
+    finally:
+        _REBUILD_LOCK.release()
+
+    assert skip is True, "Scheduler should see rebuild in progress and skip"

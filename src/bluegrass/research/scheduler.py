@@ -33,6 +33,19 @@ def start_scheduler(interval: int | None = None) -> None:
     def _loop() -> None:
         while True:
             time.sleep(effective_interval)
+
+            # Skip this tick if a full rebuild is currently replaying state.
+            # Rebuild holds its own lock for the entire reset+replay cycle;
+            # running a concurrent catchup would interleave writes into
+            # partially-rebuilt state.
+            try:
+                from bluegrass.research.rebuild import is_rebuild_in_progress
+                if is_rebuild_in_progress():
+                    _log.debug("scheduler: skipping tick — rebuild in progress")
+                    continue
+            except Exception:
+                pass  # if import fails, proceed normally
+
             try:
                 # Use the ledger-aware catchup when available (app layer —
                 # imported lazily here to avoid a research → app module cycle).

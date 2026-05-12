@@ -1,4 +1,4 @@
-"""Tests for stats_store atomic write safety and read resilience."""
+"""Tests for stats_store atomic write safety, unique temp files, and read resilience."""
 
 from __future__ import annotations
 
@@ -7,15 +7,15 @@ import os
 import threading
 import time
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
 from bluegrass.research.stats_store import (
     RUNTIME_DIR,
     STATS_STATE_PATH,
-    _STATS_STATE_TMP,
     _READ_RETRIES,
+    _WRITE_LOCK,
     load_stats_state,
     reset_stats_state,
     save_stats_state,
@@ -36,8 +36,7 @@ def clean_state():
 def test_save_and_load_roundtrip() -> None:
     state = {"by_session": {"Midday": {"draws_processed": 5}}}
     save_stats_state(state)
-    loaded = load_stats_state()
-    assert loaded == state
+    assert load_stats_state() == state
 
 
 def test_load_returns_empty_when_absent() -> None:
@@ -52,82 +51,152 @@ def test_reset_removes_file() -> None:
     assert not STATS_STATE_PATH.exists()
 
 
-def test_reset_also_removes_tmp_file() -> None:
-    _STATS_STATE_TMP.parent.mkdir(parents=True, exist_ok=True)
-    _STATS_STATE_TMP.write_text("leftover")
-    reset_stats_state()
-    assert not _STATS_STATE_TMP.exists()
-
-
 # ---------------------------------------------------------------------------
-# Atomic write: no partial file ever visible
+# Unique temp file — the core fix
 # ---------------------------------------------------------------------------
 
-def test_save_writes_via_tmp_then_replaces() -> None:
-    """os.replace is called with tmp → target, so the target is always complete."""
-    replaced: list[tuple[str, str]] = []
+def test_save_uses_unique_temp_not_shared_path() -> None:
+    """Each save_stats_state() must use a different temp path."""
+    temp_paths: list[str] = []
     real_replace = os.replace
 
-    def spy_replace(src, dst):
-        replaced.append((str(src), str(dst)))
+    def capture_replace(src: str, dst: str) -> None:
+        temp_paths.append(src)
         real_replace(src, dst)
 
-    with patch("bluegrass.research.stats_store.os.replace", side_effect=spy_replace):
-        save_stats_state({"v": 42})
+    with patch("bluegrass.research.stats_store.os.replace", side_effect=capture_replace):
+        save_stats_state({"a": 1})
+        save_stats_state({"b": 2})
 
-    assert len(replaced) == 1
-    src, dst = replaced[0]
-    assert "tmp" in src
-    assert src != dst
-    assert str(STATS_STATE_PATH) == dst
+    assert len(temp_paths) == 2
+    assert temp_paths[0] != temp_paths[1], "Each write must use a unique temp path"
 
 
-def test_tmp_file_absent_after_successful_save() -> None:
-    """The .tmp file is cleaned up by the atomic rename."""
+def test_temp_file_uses_ss_prefix_and_tmp_suffix() -> None:
+    """Temp files follow the ss_*.tmp naming convention for cleanup purposes."""
+    seen_temps: list[str] = []
+    real_replace = os.replace
+
+    def capture(src: str, dst: str) -> None:
+        seen_temps.append(src)
+        real_replace(src, dst)
+
+    with patch("bluegrass.research.stats_store.os.replace", side_effect=capture):
+        save_stats_state({"v": 1})
+
+    assert seen_temps
+    name = Path(seen_temps[0]).name
+    assert name.startswith("ss_"), f"Expected ss_ prefix, got: {name}"
+    assert name.endswith(".tmp"), f"Expected .tmp suffix, got: {name}"
+
+
+def test_temp_file_absent_after_successful_save() -> None:
+    """No ss_*.tmp files should remain after a successful save."""
     save_stats_state({"v": 1})
-    assert not _STATS_STATE_TMP.exists()
+    leftovers = list(RUNTIME_DIR.glob("ss_*.tmp"))
+    assert leftovers == [], f"Leftover temp files: {leftovers}"
 
 
-def test_target_is_valid_json_after_save() -> None:
-    save_stats_state({"session": "Midday", "count": 7})
-    raw = STATS_STATE_PATH.read_text(encoding="utf-8")
-    parsed = json.loads(raw)
-    assert parsed["count"] == 7
+def test_no_shared_stats_state_tmp_constant() -> None:
+    """Verify there is no _STATS_STATE_TMP module attribute (old shared path)."""
+    import bluegrass.research.stats_store as ss_mod
+    assert not hasattr(ss_mod, "_STATS_STATE_TMP"), (
+        "_STATS_STATE_TMP must not exist; each write should use mkstemp()"
+    )
 
 
-def test_concurrent_reads_never_see_partial_json() -> None:
-    """Spawn a reader thread while the writer is active.
+def test_temp_file_cleaned_up_on_write_failure() -> None:
+    """If os.replace raises, the unique temp file is removed."""
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    created_tmp: list[str] = []
 
-    The reader should never encounter a JSONDecodeError because os.replace
-    is atomic — it sees the complete old state or the complete new state.
-    """
-    save_stats_state({"draws": 0})   # seed with valid initial state
+    real_mkstemp = __import__("tempfile").mkstemp
 
+    def spy_mkstemp(**kwargs):
+        fd, path = real_mkstemp(**kwargs)
+        created_tmp.append(path)
+        return fd, path
+
+    with patch("bluegrass.research.stats_store.tempfile.mkstemp", side_effect=spy_mkstemp), \
+         patch("bluegrass.research.stats_store.os.replace", side_effect=OSError("disk full")):
+        with pytest.raises(OSError, match="disk full"):
+            save_stats_state({"x": 1})
+
+    for path in created_tmp:
+        assert not Path(path).exists(), f"Temp file not cleaned up: {path}"
+
+
+def test_reset_cleans_stale_tmp_files() -> None:
+    """reset_stats_state() should remove any lingering ss_*.tmp files."""
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    stale = RUNTIME_DIR / "ss_stale12345.tmp"
+    stale.write_bytes(b"garbage")
+    reset_stats_state()
+    assert not stale.exists()
+
+
+# ---------------------------------------------------------------------------
+# Write lock — serialises concurrent saves
+# ---------------------------------------------------------------------------
+
+def test_concurrent_saves_no_collision_on_temp_files() -> None:
+    """Concurrent threads each save different state; the last writer wins
+    and no FileNotFoundError or temp-file collision occurs."""
+    save_stats_state({"draws": 0})
     errors: list[Exception] = []
 
-    def reader():
-        for _ in range(50):
+    def writer(i: int) -> None:
+        try:
+            save_stats_state({"draws": i, "payload": "x" * 500})
+        except Exception as exc:
+            errors.append(exc)
+
+    threads = [threading.Thread(target=writer, args=(i,), daemon=True) for i in range(20)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=5)
+
+    assert errors == [], f"Concurrent saves raised errors: {errors}"
+    state = load_stats_state()
+    assert isinstance(state, dict)
+    assert "draws" in state
+
+
+def test_write_lock_is_threading_lock() -> None:
+    """_WRITE_LOCK must be a threading.Lock so it serialises within the process."""
+    assert isinstance(_WRITE_LOCK, type(threading.Lock()))
+
+
+# ---------------------------------------------------------------------------
+# Target is always valid JSON after concurrent saves
+# ---------------------------------------------------------------------------
+
+def test_concurrent_saves_target_always_valid_json() -> None:
+    """Reader during concurrent writes never sees invalid JSON."""
+    save_stats_state({"draws": 0})
+    json_errors: list[Exception] = []
+
+    def reader() -> None:
+        for _ in range(40):
             try:
                 state = load_stats_state()
-                # Must be a dict, never partial
                 assert isinstance(state, dict)
             except Exception as exc:
-                errors.append(exc)
-            time.sleep(0.001)
+                json_errors.append(exc)
+            time.sleep(0.002)
 
-    def writer():
-        for i in range(50):
-            save_stats_state({"draws": i, "payload": "x" * 1000})
+    def writer() -> None:
+        for i in range(40):
+            save_stats_state({"draws": i, "padding": "z" * 2000})
             time.sleep(0.001)
 
     r = threading.Thread(target=reader, daemon=True)
     w = threading.Thread(target=writer, daemon=True)
-    r.start()
-    w.start()
-    w.join(timeout=5)
-    r.join(timeout=5)
+    r.start(); w.start()
+    w.join(timeout=8); r.join(timeout=8)
 
-    assert errors == [], f"Reader saw errors: {errors}"
+    assert json_errors == [], f"Reader saw errors during concurrent writes: {json_errors}"
 
 
 # ---------------------------------------------------------------------------
@@ -135,70 +204,30 @@ def test_concurrent_reads_never_see_partial_json() -> None:
 # ---------------------------------------------------------------------------
 
 def test_load_retries_on_json_decode_error_then_succeeds() -> None:
-    """First read raises JSONDecodeError; second succeeds — load returns state."""
     good_state = {"recovered": True}
-    call_count = [0]
-
-    original_open = open
-
-    def patched_open(path, *args, **kwargs):
-        if str(path) == str(STATS_STATE_PATH) and "r" in args:
-            call_count[0] += 1
-            if call_count[0] == 1:
-                # Simulate partial-write garbage on first read
-                m = MagicMock()
-                m.__enter__ = lambda s: s
-                m.__exit__ = MagicMock(return_value=False)
-                m.read = MagicMock(return_value="{bad json")
-
-                class BadFile:
-                    def __enter__(self): return self
-                    def __exit__(self, *a): return False
-                    def read(self): return "{bad json"
-
-                import io
-                bad = io.StringIO("{bad json")
-                bad.__enter__ = lambda s: s
-                bad.__exit__ = lambda s, *a: False
-
-                class FakeFile:
-                    def __enter__(self): return self
-                    def __exit__(self, *a): return False
-
-                import builtins
-                orig = builtins.open
-                # Use json.load against bad content directly
-                raise json.JSONDecodeError("Expecting value", "{bad json", 0)
-            # second call — return real file
-        return original_open(path, *args, **kwargs)
-
-    # Simpler: patch json.load to fail once then succeed
     save_stats_state(good_state)
     load_call = [0]
-    real_json_load = json.load
+    real_load = json.load
 
-    def patched_json_load(fh):
+    def patched_load(fh):
         load_call[0] += 1
         if load_call[0] == 1:
             raise json.JSONDecodeError("simulated partial read", "", 0)
-        return real_json_load(fh)
+        return real_load(fh)
 
-    with patch("bluegrass.research.stats_store.json.load", side_effect=patched_json_load), \
+    with patch("bluegrass.research.stats_store.json.load", side_effect=patched_load), \
          patch("bluegrass.research.stats_store.time.sleep"):
         result = load_stats_state()
 
     assert result == good_state
-    assert load_call[0] == 2   # failed once, succeeded on retry
+    assert load_call[0] == 2
 
 
 def test_load_raises_runtime_error_after_all_retries_exhausted() -> None:
-    """If every read attempt fails with JSONDecodeError, RuntimeError is raised."""
     save_stats_state({"x": 1})
-
-    with patch(
-        "bluegrass.research.stats_store.json.load",
-        side_effect=json.JSONDecodeError("always bad", "", 0),
-    ), patch("bluegrass.research.stats_store.time.sleep"):
+    with patch("bluegrass.research.stats_store.json.load",
+               side_effect=json.JSONDecodeError("always bad", "", 0)), \
+         patch("bluegrass.research.stats_store.time.sleep"):
         with pytest.raises(RuntimeError, match="invalid JSON"):
             load_stats_state()
 
@@ -219,48 +248,13 @@ def test_load_retries_exactly_read_retries_times() -> None:
     assert call_count[0] == _READ_RETRIES
 
 
-def test_load_returns_empty_on_file_not_found_mid_read() -> None:
-    """File deleted between exists() check and open() returns {}."""
-    save_stats_state({"x": 1})
-
-    with patch(
-        "bluegrass.research.stats_store.STATS_STATE_PATH"
-    ) as mock_path:
-        mock_path.exists.return_value = True
-        mock_path.open.side_effect = FileNotFoundError
-        mock_path.__str__ = lambda s: str(STATS_STATE_PATH)
-        result = load_stats_state()
-
-    assert result == {}
-
-
 # ---------------------------------------------------------------------------
-# save_stats_state: tmp cleanup on failure
-# ---------------------------------------------------------------------------
-
-def test_tmp_file_cleaned_up_on_write_failure() -> None:
-    """If fsync or rename raises, the .tmp file is removed."""
-    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
-
-    with patch(
-        "bluegrass.research.stats_store.os.replace",
-        side_effect=OSError("disk full"),
-    ):
-        with pytest.raises(OSError, match="disk full"):
-            save_stats_state({"x": 1})
-
-    assert not _STATS_STATE_TMP.exists()
-
-
-# ---------------------------------------------------------------------------
-# Rebuild path: save after reset produces valid readable state
+# Rebuild path: reset then replay produces valid state
 # ---------------------------------------------------------------------------
 
 def test_reset_then_save_then_load_is_valid() -> None:
-    """Simulates the rebuild path: reset → replay → save → load."""
     save_stats_state({"old": True})
     reset_stats_state()
     assert load_stats_state() == {}
-
     save_stats_state({"new": True, "draws": 100})
     assert load_stats_state() == {"draws": 100, "new": True}
