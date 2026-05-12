@@ -144,7 +144,13 @@ def _last_processed_draw(session: str) -> str:
         .get(session, {})
         .get("processed_draw_ids", [])
     )
-    return ids[-1] if ids else ""
+    if not ids:
+        return ""
+    # Draw IDs are "YYYY-MM-DD:Session:result" — string max == chronological max.
+    # Using max() rather than ids[-1] guards against out-of-order appends that
+    # can occur when bootstrap and scheduler overlap, so that the last-appended
+    # entry is occasionally older than some earlier entries.
+    return max(ids)
 
 
 def build_session_stats(session: str) -> dict[str, Any]:

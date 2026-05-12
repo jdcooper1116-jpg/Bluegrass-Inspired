@@ -185,6 +185,40 @@
   </div>
   {% endif %}
 
+  {# Auto-catchup result banner (shown when page attempted an automatic sync) #}
+  {% if auto_catchup_attempted %}
+  <div class="pb-sync-banner{% if auto_catchup_applied == 0 %} pb-sync-banner-clear{% endif %}"
+       style="margin-bottom:6px">
+    <span class="sync-label">
+      Auto-sync:
+      {%- if auto_catchup_applied > 0 %} Applied {{ auto_catchup_applied }} draw{{ "s" if auto_catchup_applied != 1 }}
+      {%- else %} No new draws found{% endif %}
+    </span>
+    {% if auto_catchup_detail %}
+    <span class="sync-detail"> · {{ auto_catchup_detail }}</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# Rebuild-recommended warning — surfaces "skipped but stale" condition #}
+  {% if vm.audit.rebuild_recommended %}
+  <div style="background:#2a1400;border:1px solid var(--amber);border-radius:var(--radius);
+              padding:10px 14px;margin-bottom:var(--gap);display:flex;align-items:center;gap:12px">
+    <span style="font-size:13px;color:var(--amber);font-weight:700">⚠ Rebuild required</span>
+    <span style="font-size:11px;color:var(--muted)">
+      {{ vm.audit.draws_behind }} days behind (sync window is {{ vm.audit.sync_window_days }}d).
+      Sync cannot bridge this gap — a full state rebuild is needed.
+      {% if vm.audit.skipped_but_stale_reason %}
+      <em>{{ vm.audit.skipped_but_stale_reason }}</em>
+      {% endif %}
+    </span>
+    <form method="post" action="/refresh/rebuild-runtime" style="margin-left:auto">
+      <button type="submit" class="btn-pb-refresh"
+              style="border-color:var(--amber);color:var(--amber)">↺ Rebuild Now</button>
+    </form>
+  </div>
+  {% endif %}
+
   {# Page header #}
   <div class="pb-page-header">
     <h1 class="pb-page-title">{{ vm.game_label }}</h1>

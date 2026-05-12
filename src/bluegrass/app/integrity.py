@@ -98,6 +98,9 @@ def build_integrity_view() -> dict[str, Any]:
             "draws_processed": sess_state.get("draws_processed", 0),
             "last_resets": _last_resets(sess_state),
             "rebuild_needed": match_status != "matched",
+            "rebuild_recommended": audit_sess.get("rebuild_recommended", False),
+            "skipped_but_stale_reason": audit_sess.get("skipped_but_stale_reason"),
+            "sync_window_days": audit_sess.get("sync_window_days", 30),
         }
 
     total_processed = stats.get("total_draws_processed", 0)

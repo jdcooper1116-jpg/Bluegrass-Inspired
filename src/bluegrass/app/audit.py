@@ -16,6 +16,7 @@ from typing import Any
 
 from bluegrass.app.playlist import _VALID_SESSIONS, _last_processed_draw
 from bluegrass.engine.client import EngineClientError, fetch_latest_results
+from bluegrass.research.config import SYNC_WINDOW_DAYS
 from bluegrass.research.stats_store import load_stats_state
 
 _SESSIONS = ("Midday", "Evening", "Night")
@@ -133,6 +134,21 @@ def _build_one(
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+    # Detect the "skipped but stale" failure mode:
+    # If draws_behind > SYNC_WINDOW_DAYS, run_catchup(SYNC_WINDOW_DAYS) can never
+    # bridge the gap — it fetches the last N days, but all those draws are already
+    # processed.  Only a full rebuild (days=ANALYSIS_WINDOW_DAYS) can recover.
+    rebuild_recommended = bool(
+        freshness_status == "stale"
+        and draws_behind is not None
+        and draws_behind > SYNC_WINDOW_DAYS
+    )
+    skipped_but_stale_reason = (
+        f"draws_behind ({draws_behind}) exceeds sync_window ({SYNC_WINDOW_DAYS}d); "
+        f"run_catchup cannot reach the gap — rebuild required"
+        if rebuild_recommended else None
+    )
+
     return {
         "session": session,
         "engine_latest_draw": engine_draw_id,
@@ -146,6 +162,9 @@ def _build_one(
         "comparison_status": comparison_status,
         "gap_detected": gap_detected,
         "gap_reason": gap_reason,
+        "rebuild_recommended": rebuild_recommended,
+        "skipped_but_stale_reason": skipped_but_stale_reason,
+        "sync_window_days": SYNC_WINDOW_DAYS,
         "generated_at": generated_at,
     }
 

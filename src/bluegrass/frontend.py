@@ -212,12 +212,35 @@ def pb_session(
              "detail": f"Session {session!r} not found. Valid: Midday, Evening, Night."},
             status_code=404,
         )
+
+    # Auto-catchup if the session is stale and engine is reachable.
+    # This is a GET-triggered write — idempotent since refresh_from_result
+    # deduplicates by draw ID. We do it here (not just in scheduler) so that
+    # the page always renders from the freshest possible state.
+    auto_catchup_attempted = False
+    auto_catchup_applied   = 0
+    auto_catchup_detail    = None
+
+    from bluegrass.app.audit import build_session_audit as _quick_audit
+    _pre_audit = _quick_audit(session)
+    if _pre_audit.get("freshness_status") == "stale":
+        auto_catchup_attempted = True
+        try:
+            from bluegrass.app.forecast_orchestrator import run_catchup_with_ledger
+            _cr = run_catchup_with_ledger()
+            auto_catchup_applied = _cr.get("applied", 0)
+        except Exception as _exc:
+            auto_catchup_detail = str(_exc)
+
     vm = build_play_builder_session(session)
     sync_result = {"processed": processed, "skipped": skipped, "errors": errors} if synced else None
     return templates.TemplateResponse(request, "pb_session.html", {
         **_page_context(),
         "vm": vm,
         "sync_result": sync_result,
+        "auto_catchup_attempted": auto_catchup_attempted,
+        "auto_catchup_applied":   auto_catchup_applied,
+        "auto_catchup_detail":    auto_catchup_detail,
         "active": session,
     })
 

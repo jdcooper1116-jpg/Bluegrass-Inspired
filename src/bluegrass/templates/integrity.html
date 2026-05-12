@@ -7,6 +7,12 @@
   <input type="hidden" name="next" value="/integrity">
   <button type="submit" class="btn-pb-refresh">↻ Sync Latest</button>
 </form>
+<form method="post" action="/refresh/rebuild-runtime?next=/integrity" style="display:inline;margin-left:6px"
+      onsubmit="return confirm('Clear runtime stats and replay 250 days of draw history?')">
+  <button type="submit" class="btn-pb-refresh" style="border-color:var(--amber);color:var(--amber)">
+    ↺ Rebuild State
+  </button>
+</form>
 {% endblock %}
 
 {% block sidebar_freshness %}
@@ -60,6 +66,25 @@
   </span>
 </div>
 {% endif %}
+
+{# Rebuild-recommended banner — surfaces "skipped but stale" root cause #}
+{% for sess, s in vm.sessions.items() %}
+{% if s.rebuild_recommended %}
+<div style="background:#2a1400;border:1px solid var(--amber);border-radius:var(--radius);
+            padding:10px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px">
+  <div>
+    <div style="font-size:12px;color:var(--amber);font-weight:700">
+      ⚠ {{ sess }}: rebuild required ({{ s.draws_behind }}d behind, sync window {{ s.sync_window_days }}d)
+    </div>
+    {% if s.skipped_but_stale_reason %}
+    <div style="font-size:10px;color:var(--muted);margin-top:2px">
+      {{ s.skipped_but_stale_reason }}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endfor %}
 
 <div class="pb-section-title">
   Per-Session Engine vs Bluegrass Comparison

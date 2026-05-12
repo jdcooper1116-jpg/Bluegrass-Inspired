@@ -189,6 +189,29 @@ def refresh_sync_latest() -> dict[str, object]:
     }
 
 
+@app.post("/refresh/rebuild-runtime")
+def refresh_rebuild_runtime() -> dict[str, object]:
+    """Clear and replay the derived runtime stats from engine history.
+
+    USE THIS WHEN:
+    - Integrity shows stale but Sync Latest reports only skipped draws
+    - draws_behind > SYNC_WINDOW_DAYS (sync window too small to reach the gap)
+    - State is suspected of inconsistency after overlapping bootstrap runs
+
+    Clears stats_state.json and replays ANALYSIS_WINDOW_DAYS ({window}d) of
+    draws in strict chronological order.
+    Does NOT touch baseline seed CSVs or forecast ledger files.
+    """.format(window=ANALYSIS_WINDOW_DAYS)
+    from bluegrass.research.rebuild import rebuild_runtime_state
+    result = rebuild_runtime_state()
+    return {
+        "cleared": result["cleared"],
+        "days": result["days"],
+        "applied_count": result["applied"],
+        "skipped_count": result["skipped"],
+        "error_count": result["errors"],
+        "error_detail": result.get("error_detail"),
+    }
 @app.post("/refresh/analysis-bootstrap")
 def refresh_analysis_bootstrap() -> dict[str, object]:
     """Re-run the {window}-day deep analysis bootstrap. Idempotent.
