@@ -26,65 +26,181 @@
 </div>
 {% endif %}
 
-{# Audit strip — source of truth for freshness #}
+{# Audit strip #}
 <div class="audit-strip">
   <span class="freshness-badge freshness-{{ audit.freshness_status | replace('_','-') }}">
     {{ audit.freshness_status }}
   </span>
-  <span class="audit-field">
-    Engine: <code>{{ audit.engine_latest_draw or "—" }}</code>
-  </span>
-  <span class="audit-field">
-    Processed: <code>{{ audit.bluegrass_last_processed_draw or "—" }}</code>
-  </span>
+  <span class="audit-field">Engine: <code>{{ audit.engine_latest_draw or "—" }}</code></span>
+  <span class="audit-field">Processed: <code>{{ audit.bluegrass_last_processed_draw or "—" }}</code></span>
   {% if audit.draws_behind and audit.draws_behind > 0 %}
   <span class="audit-warn">{{ audit.draws_behind }} draw{{ "s" if audit.draws_behind != 1 }} behind</span>
   {% endif %}
   <span class="audit-field">Coverage: {{ audit.coverage }}</span>
-  <span class="audit-field" style="margin-left:auto;color:var(--border)">
-    {{ audit.generated_at }}
+  <span class="audit-field" style="margin-left:auto;color:var(--border)">{{ audit.generated_at }}</span>
+</div>
+
+{# Board provenance strip #}
+<div class="provenance-strip">
+  <span class="prov-field">
+    <span class="prov-label">Window</span>
+    {{ board.metadata.analysis_window_days }}d
+  </span>
+  <span class="prov-field">
+    <span class="prov-label">Draws</span>
+    {{ board.metadata.draws_processed or "—" }}
+  </span>
+  <span class="prov-field">
+    <span class="prov-label">Mode</span>
+    <span class="prov-mode">{{ board.metadata.sort_mode or "composite" }}</span>
+  </span>
+  <span class="prov-field">
+    <span class="prov-label">Last</span>
+    {{ board.metadata.last_processed_draw or "—" }}
+  </span>
+  <span class="prov-field" style="margin-left:auto">
+    <a href="/session/{{ session }}?sort=overdue"
+       class="prov-mode-btn{% if (board.metadata.sort_mode or 'composite') == 'overdue' %} active{% endif %}">Overdue</a>
+    <a href="/session/{{ session }}?sort=deviation"
+       class="prov-mode-btn{% if board.metadata.sort_mode == 'deviation' %} active{% endif %}">Deviation</a>
+    <a href="/session/{{ session }}?sort=composite"
+       class="prov-mode-btn{% if (board.metadata.sort_mode or 'composite') == 'composite' %} active{% endif %}">Composite</a>
   </span>
 </div>
 
 <div class="rationale">{{ board.rationale }}</div>
 
-{# Section grid: top family cards #}
+{# Section grid — rendered from detail cards #}
 <div class="section-grid">
 
+  {# Sums — detail cards #}
   <div class="section-col">
-    <div class="section-title">Sums</div>
-    {% for card in board.top_sums %}
+    <div class="section-title">
+      Sums
+      {% if board.section_modes %}
+      <span class="section-mode-badge
+        {%- if board.section_modes.sums.mode_sensitive %} smb-active{% else %} smb-fixed{% endif %}">
+        {{ board.section_modes.sums.label }}
+      </span>
+      {% endif %}
+    </div>
+    {% for card in board.top_sums_detail %}
     <div class="card">
-      <div class="card-value">{{ card.value }}</div>
+      <div class="card-header-row">
+        <div class="card-value">{{ card.value }}</div>
+        {% if card.severity_band %}
+        <span class="badge-severity badge-sev-{{ card.severity_band }}">{{ card.severity_band }}</span>
+        {% endif %}
+        <span class="signal-quality-chip sqc-{{ card.signal_quality or 'unknown' }}">
+          {{ card.signal_quality or "?" }}
+        </span>
+        {% if card.movement_label and card.movement_label != "steady" %}
+        <span class="movement-chip
+          {%- if '↑' in card.movement_label %} mv-up{% elif '↓' in card.movement_label %} mv-down{% endif %}">
+          {{ card.movement_label }}
+        </span>
+        {% endif %}
+      </div>
       <div class="card-meta">
         <span class="draws-since">{{ card.draws_since }} draws</span>
         &nbsp;· last {{ card.last_seen or "—" }}
+        {% if card.current_rank %}&nbsp;· #{{ card.current_rank }}{% endif %}
       </div>
+      {% if card.gap_ratio is not none %}
+      <div class="card-deviation-row">
+        <span class="dev-pill">{{ "%.1f"|format(card.gap_ratio) }}× expected</span>
+        {% if card.expected_gap_draws %}
+        <span class="dev-muted">gap {{ card.expected_gap_draws | round(0) | int }}</span>
+        {% endif %}
+        {% if card.multi_window_agreement %}
+        <span class="dev-muted">{{ card.multi_window_agreement }}/3 cold</span>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if card.compare_note %}
+      <div class="compare-note">{{ card.compare_note }}</div>
+      {% endif %}
+      {% if card.overdue_rank and board.metadata.sort_mode != 'overdue' %}
+      <div class="rank-comparison-row">
+        <span class="rank-chip">ov #{{ card.overdue_rank }}</span>
+        <span class="rank-chip">dv #{{ card.deviation_rank }}</span>
+        <span class="rank-chip rank-chip-active">cx #{{ card.composite_rank }}</span>
+      </div>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
 
+  {# Root Sums — detail cards #}
   <div class="section-col">
-    <div class="section-title">Root Sums</div>
-    {% for card in board.top_root_sums %}
+    <div class="section-title">
+      Root Sums
+      {% if board.section_modes %}
+      <span class="section-mode-badge
+        {%- if board.section_modes.root_sums.mode_sensitive %} smb-active{% else %} smb-fixed{% endif %}">
+        {{ board.section_modes.root_sums.label }}
+      </span>
+      {% endif %}
+    </div>
+    {% for card in board.top_root_sums_detail %}
     <div class="card">
-      <div class="card-value">{{ card.value }}</div>
+      <div class="card-header-row">
+        <div class="card-value">{{ card.value }}</div>
+        {% if card.severity_band %}
+        <span class="badge-severity badge-sev-{{ card.severity_band }}">{{ card.severity_band }}</span>
+        {% endif %}
+        <span class="signal-quality-chip sqc-{{ card.signal_quality or 'unknown' }}">
+          {{ card.signal_quality or "?" }}
+        </span>
+        {% if card.movement_label and card.movement_label != "steady" %}
+        <span class="movement-chip
+          {%- if '↑' in card.movement_label %} mv-up{% elif '↓' in card.movement_label %} mv-down{% endif %}">
+          {{ card.movement_label }}
+        </span>
+        {% endif %}
+      </div>
       <div class="card-meta">
         <span class="draws-since">{{ card.draws_since }} draws</span>
         &nbsp;· last {{ card.last_seen or "—" }}
+        {% if card.current_rank %}&nbsp;· #{{ card.current_rank }}{% endif %}
       </div>
+      {% if card.gap_ratio is not none %}
+      <div class="card-deviation-row">
+        <span class="dev-pill">{{ "%.1f"|format(card.gap_ratio) }}× expected</span>
+        {% if card.expected_gap_draws %}
+        <span class="dev-muted">gap {{ card.expected_gap_draws | round(0) | int }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if card.compare_note %}
+      <div class="compare-note">{{ card.compare_note }}</div>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
 
+  {# Pairs — detail cards grouped by position #}
   <div class="section-col">
-    <div class="section-title">Pairs</div>
-    {% for position, position_cards in pairs_by_position %}
+    <div class="section-title">
+      Pairs
+      {% if board.section_modes %}
+      <span class="section-mode-badge smb-fixed">{{ board.section_modes.pairs.label }}</span>
+      {% endif %}
+    </div>
+    {% for position, position_cards in pairs_detail_by_position %}
     <div class="pair-group">
       <div class="pair-group-label">{{ position | capitalize }} Pairs</div>
       {% for card in position_cards %}
       <div class="card" style="margin-bottom:6px">
-        <div class="card-value">{{ card.value }}</div>
+        <div class="card-header-row">
+          <div class="card-value">{{ card.value }}</div>
+          {% if card.severity_band %}
+          <span class="badge-severity badge-sev-{{ card.severity_band }}">{{ card.severity_band }}</span>
+          {% endif %}
+          <span class="signal-quality-chip sqc-{{ card.signal_quality or 'overdue-only' }}">
+            {{ card.signal_quality or "overdue-only" }}
+          </span>
+        </div>
         <div style="margin-top:3px">
           <span class="chip chip-{{ card.pair_position }}">{{ card.pair_position }}</span>
           {% if card.play_type_label != "unknown" %}
@@ -95,17 +211,35 @@
           <span class="draws-since">{{ card.draws_since }} draws</span>
           &nbsp;· last {{ card.last_seen or "—" }}
         </div>
+        {% if card.gap_ratio is not none %}
+        <div class="card-deviation-row">
+          <span class="dev-pill">{{ "%.1f"|format(card.gap_ratio) }}× expected</span>
+        </div>
+        {% elif card.deviation_note %}
+        <div class="card-deviation-row">
+          <span class="dev-muted dev-note">{{ card.deviation_note }}</span>
+        </div>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
     {% endfor %}
   </div>
 
+  {# Combinations — always overdue-only #}
   <div class="section-col">
-    <div class="section-title">Combinations</div>
+    <div class="section-title">
+      Combinations
+      {% if board.section_modes %}
+      <span class="section-mode-badge smb-fixed">{{ board.section_modes.combinations.label }}</span>
+      {% endif %}
+    </div>
     {% for card in enriched_combos %}
     <div class="card">
-      <div class="card-value">{{ card.value }}</div>
+      <div class="card-header-row">
+        <div class="card-value">{{ card.value }}</div>
+        <span class="signal-quality-chip sqc-overdue-only">overdue-only</span>
+      </div>
       <div style="margin-top:3px">
         {% if card.digit_pattern != "unknown" %}
         <span class="chip chip-{{ card.digit_pattern }}">{{ card.digit_pattern }}</span>
@@ -124,15 +258,28 @@
 
 </div>
 
-{# Shortlist with classification chips #}
+{# Shortlist #}
 <div class="shortlist-section">
-  <div class="shortlist-title">Shortlist</div>
+  <div class="shortlist-title">
+    Shortlist
+    {% if board.section_modes %}
+    <span class="section-mode-badge smb-fixed" style="font-size:9px">{{ board.section_modes.shortlist.label }}</span>
+    {% endif %}
+  </div>
   <div class="shortlist-grid">
     {% for entry in enriched_shortlist %}
     <div class="shortlist-entry">
       <span class="entry-num">{{ loop.index }}</span>
       <div class="entry-body">
-        <span class="badge badge-{{ entry.family }}">{{ entry.family | replace("_", " ") }}</span>
+        <div class="entry-header-row">
+          <span class="badge badge-{{ entry.family }}">{{ entry.family | replace("_", " ") }}</span>
+          {% if entry.severity_band %}
+          <span class="badge-severity badge-sev-{{ entry.severity_band }}">{{ entry.severity_band }}</span>
+          {% endif %}
+          <span class="signal-quality-chip sqc-{{ entry.signal_quality or 'unknown' }}">
+            {{ entry.signal_quality or "?" }}
+          </span>
+        </div>
         <div class="entry-value">{{ entry.value }}</div>
         <div style="margin-top:3px">
           {% if entry.digit_pattern is defined and entry.digit_pattern != "unknown" %}
@@ -145,7 +292,34 @@
           <span class="chip chip-{{ entry.pair_position }}">{{ entry.pair_position }}</span>
           {% endif %}
         </div>
+        {% if entry.gap_ratio is not none %}
+        <div class="entry-deviation-row">
+          <span class="dev-pill-sm">{{ "%.1f"|format(entry.gap_ratio) }}×</span>
+          {% if entry.multi_window_agreement %}
+          <span class="dev-muted">{{ entry.multi_window_agreement }}/3 cold</span>
+          {% endif %}
+          {% if entry.expected_gap_draws %}
+          <span class="dev-muted">gap {{ entry.expected_gap_draws | round(0) | int }}</span>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if entry.score_components %}
+        <div class="score-components-row">
+          {% if entry.score_components.gap_ratio is defined and entry.score_components.gap_ratio is not none %}
+          <span class="sc-pill">gr {{ "%.2f"|format(entry.score_components.gap_ratio) }}</span>
+          {% endif %}
+          {% if entry.score_components.structural_weight is defined and entry.score_components.structural_weight is not none %}
+          <span class="sc-pill">sw {{ "%.2f"|format(entry.score_components.structural_weight) }}</span>
+          {% endif %}
+          {% if entry.score_components.composite_score is defined and entry.score_components.composite_score is not none %}
+          <span class="sc-pill sc-total">∑ {{ "%.3f"|format(entry.score_components.composite_score) }}</span>
+          {% endif %}
+        </div>
+        {% endif %}
         <div class="entry-why">{{ entry.why_flagged }}</div>
+        {% if entry.deviation_note %}
+        <div class="entry-dev-note">{{ entry.deviation_note }}</div>
+        {% endif %}
       </div>
     </div>
     {% endfor %}
